@@ -2,7 +2,7 @@ export interface User {
   id: number;
   name: string;
   username: string;
-  role: 'MAIN_BOSS' | 'SUB_BOSS' | 'STAFF_CASHIER' | 'CHEF';
+  role: 'BOSS' | 'CASHIER' | 'MAIN_BOSS' | 'SUB_BOSS' | 'STAFF_CASHIER' | 'CHEF';
   branch_id: string;
   branch_name: string;
   is_main_boss: boolean;

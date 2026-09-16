@@ -7,10 +7,12 @@ import { TableService } from '../../core/services/table.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DiningTable } from '../../core/models/pos.models';
 
+import { IconComponent } from '../../shared/icon.component';
+
 @Component({
   selector: 'app-tables',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, IconComponent],
   template: `
     <div class="tables-page">
       <app-header></app-header>
@@ -72,7 +74,7 @@ import { DiningTable } from '../../core/models/pos.models';
 
               <div class="table-card-body">
                 <div class="capacity-info">
-                  <span class="cap-icon">👥</span>
+                  <app-icon name="users" [size]="14"></app-icon>
                   <span>{{ table.capacity }} Seats</span>
                 </div>
 
@@ -93,7 +95,7 @@ import { DiningTable } from '../../core/models/pos.models';
                   </div>
                 } @else {
                   <div class="ready-badge">
-                    <span>✨ Clean & Ready</span>
+                    <span>Clean & Ready</span>
                   </div>
                 }
               </div>
@@ -101,18 +103,20 @@ import { DiningTable } from '../../core/models/pos.models';
               <div class="table-card-actions">
                 @if (table.status === 'AVAILABLE') {
                   <button class="btn btn-primary btn-sm full-w" (click)="openAssignModal(table)">
-                    <span>⚡ Assign & Dine</span>
+                    <span>Assign & Dine</span>
                   </button>
                 } @else {
                   <div class="action-btn-group">
                     <button class="btn btn-secondary btn-sm" (click)="goToPos(table)">
-                      <span>🛒 Order</span>
+                      <app-icon name="cart" [size]="14"></app-icon>
+                      <span>Order</span>
                     </button>
                     <button class="btn btn-outline btn-sm" (click)="openTransferModal(table)" title="Transfer to another table">
-                      <span>🔄 Move</span>
+                      <span>Move</span>
                     </button>
                     <button class="btn btn-outline-danger btn-sm" (click)="releaseTable(table)" title="Release / Clear Table">
-                      <span>🧹 Clear</span>
+                      <app-icon name="trash" [size]="14"></app-icon>
+                      <span>Clear</span>
                     </button>
                   </div>
                 }
@@ -128,7 +132,9 @@ import { DiningTable } from '../../core/models/pos.models';
           <div class="modal-window glass-panel" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2>Open {{ selectedTable.table_number }} ({{ selectedTable.zone }})</h2>
-              <button class="btn-close" (click)="showAssignModal = false">✕</button>
+              <button class="btn-close" (click)="showAssignModal = false">
+                <app-icon name="close" [size]="16"></app-icon>
+              </button>
             </div>
             <div class="modal-body">
               <div class="form-group">
@@ -160,7 +166,9 @@ import { DiningTable } from '../../core/models/pos.models';
           <div class="modal-window glass-panel" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2>Transfer {{ selectedTable.table_number }} to Another Table</h2>
-              <button class="btn-close" (click)="showTransferModal = false">✕</button>
+              <button class="btn-close" (click)="showTransferModal = false">
+                <app-icon name="close" [size]="16"></app-icon>
+              </button>
             </div>
             <div class="modal-body">
               <p class="modal-desc">
@@ -181,7 +189,7 @@ import { DiningTable } from '../../core/models/pos.models';
 
               @if (availableTables.length === 0) {
                 <div class="empty-state">
-                  <span>⚠️ No other tables are currently available for transfer.</span>
+                  <span>No other tables are currently available for transfer.</span>
                 </div>
               }
             </div>

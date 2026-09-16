@@ -6,10 +6,12 @@ import { AccountingService } from '../../core/services/accounting.service';
 import { SettlementService } from '../../core/services/settlement.service';
 import { AuthService } from '../../core/services/auth.service';
 
+import { IconComponent } from '../../shared/icon.component';
+
 @Component({
   selector: 'app-accounting',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, IconComponent],
   template: `
     <div class="accounting-page">
       <app-header></app-header>
@@ -24,7 +26,8 @@ import { AuthService } from '../../core/services/auth.service';
 
           <div class="header-actions">
             <button class="btn btn-primary" (click)="openExpenseModal()">
-              <span>➕ Log New Expense</span>
+              <app-icon name="plus" [size]="14"></app-icon>
+              <span>Log New Expense</span>
             </button>
           </div>
         </div>
@@ -84,7 +87,8 @@ import { AuthService } from '../../core/services/auth.service';
                 <span class="val">{{ formatCurrency((settlementSummary.base_rent_amount || 500) + (settlementSummary.royalty_amount || (plData?.gross_sales * 0.03))) }}</span>
               </div>
               <button class="btn btn-secondary btn-sm" (click)="triggerSettlement()">
-                <span>⚡ Settle Period</span>
+                <app-icon name="bolt" [size]="14"></app-icon>
+                <span>Settle Period</span>
               </button>
             </div>
           </div>
@@ -144,7 +148,9 @@ import { AuthService } from '../../core/services/auth.service';
           <div class="modal-window glass-panel" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2>Log Store Expense</h2>
-              <button class="btn-close" (click)="showExpenseModal = false">✕</button>
+              <button class="btn-close" (click)="showExpenseModal = false">
+                <app-icon name="close" [size]="16"></app-icon>
+              </button>
             </div>
             <div class="modal-body">
               <div class="form-group">

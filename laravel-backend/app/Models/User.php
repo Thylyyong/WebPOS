@@ -58,16 +58,16 @@ class User extends Authenticatable
 
     public function isMainBoss(): bool
     {
-        return $this->role === 'MAIN_BOSS' || $this->role === 'OWNER';
+        return in_array($this->role, ['BOSS', 'MAIN_BOSS', 'OWNER']);
     }
 
     public function isSubBoss(): bool
     {
-        return $this->role === 'SUB_BOSS' || $this->role === 'MANAGER';
+        return in_array($this->role, ['SUB_BOSS', 'MANAGER']);
     }
 
     public function isCashier(): bool
     {
-        return $this->role === 'STAFF_CASHIER' || $this->role === 'CASHIER';
+        return in_array($this->role, ['CASHIER', 'STAFF_CASHIER']);
     }
 }

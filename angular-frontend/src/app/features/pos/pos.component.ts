@@ -7,10 +7,12 @@ import { CatalogService } from '../../core/services/catalog.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Category, Product, CartItem } from '../../core/models/pos.models';
 
+import { IconComponent } from '../../shared/icon.component';
+
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, IconComponent],
   template: `
     <div class="pos-layout">
       <!-- Shared Navigation Header -->
@@ -23,7 +25,9 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
           <!-- Search & Category Header -->
           <div class="catalog-controls glass-panel">
             <div class="search-box">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon">
+                <app-icon name="search" [size]="16"></app-icon>
+              </span>
               <input
                 type="text"
                 placeholder="Search products by name, SKU or scan barcode..."
@@ -32,7 +36,9 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
                 (ngModelChange)="onSearchChange()"
               />
               @if (searchTerm) {
-                <button type="button" class="clear-search-btn" (click)="clearSearch()">✖</button>
+                <button type="button" class="clear-search-btn" (click)="clearSearch()">
+                  <app-icon name="close" [size]="14"></app-icon>
+                </button>
               }
             </div>
 
@@ -44,7 +50,8 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
                 [class.active]="selectedCategoryId === 'all'"
                 (click)="selectCategory('all')"
               >
-                <span>⭐ All Items</span>
+                <app-icon name="star" [size]="14"></app-icon>
+                <span>All Items</span>
               </button>
               @for (cat of categories; track cat.id) {
                 <button
@@ -54,7 +61,8 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
                   (click)="selectCategory(cat.id)"
                   [style.--cat-color]="cat.color_hex || '#10B981'"
                 >
-                  <span>{{ getCategoryIcon(cat.id) }} {{ cat.name }}</span>
+                  <app-icon [name]="getCategoryIcon(cat.id)" [size]="14"></app-icon>
+                  <span>{{ cat.name }}</span>
                 </button>
               }
             </div>
@@ -80,7 +88,9 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
               </div>
             } @empty {
               <div class="no-products glass-panel">
-                <div class="empty-icon">🍽️</div>
+                <div class="empty-icon">
+                  <app-icon name="food" [size]="36"></app-icon>
+                </div>
                 <div class="empty-title">No products found</div>
                 <div class="empty-desc">Try clearing your search or selecting another category.</div>
               </div>
@@ -94,22 +104,29 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
           <div class="cart-header">
             <div class="cart-title-row">
               <div class="cart-title">
-                <span>🛒 Active Cart</span>
+                <app-icon name="cart" [size]="18"></app-icon>
+                <span>Active Cart</span>
                 <span class="cart-badge">{{ pos.cart().length }} items</span>
               </div>
               @if (pos.cart().length > 0) {
-                <button type="button" class="clear-cart-btn" (click)="pos.clearCart()" title="Clear Cart">Clear</button>
+                <button type="button" class="clear-cart-btn" (click)="pos.clearCart()">
+                  <app-icon name="trash" [size]="14"></app-icon>
+                  <span>Clear</span>
+                </button>
               }
             </div>
 
             <!-- Table & Customer Indicator -->
             <div class="cart-meta-bar">
               <span class="meta-item">
-                <span class="meta-icon">🍽️</span>
+                <span class="meta-icon">
+                  <app-icon name="food" [size]="14"></app-icon>
+                </span>
                 <span>{{ pos.selectedTable()?.name || 'Walk-In Customer' }}</span>
               </span>
               <button type="button" class="hold-btn" [disabled]="pos.cart().length === 0" (click)="holdCurrentOrder()">
-                📌 Hold
+                <app-icon name="lock" [size]="14"></app-icon>
+                <span>Hold</span>
               </button>
             </div>
           </div>
@@ -138,12 +155,16 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
                       <span class="disc-tag">-{{ item.discount_percent }}%</span>
                     }
                   </div>
-                  <button type="button" class="item-delete-btn" (click)="pos.removeItem($index); $event.stopPropagation()" title="Remove item">🗑️</button>
+                  <button type="button" class="item-delete-btn" (click)="pos.removeItem($index); $event.stopPropagation()" title="Remove item">
+                    <app-icon name="trash" [size]="14"></app-icon>
+                  </button>
                 </div>
               </div>
             } @empty {
               <div class="empty-cart">
-                <div class="empty-cart-icon">🛒</div>
+                <div class="empty-cart-icon">
+                  <app-icon name="cart" [size]="36"></app-icon>
+                </div>
                 <div class="empty-cart-text">Cart is empty</div>
                 <div class="empty-cart-hint">Click products on the left or scan barcodes to begin order.</div>
               </div>
@@ -218,7 +239,8 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
               [disabled]="pos.cart().length === 0"
               (click)="openPaymentModal('CASH')"
             >
-              <span>💵 Pay Cash</span>
+              <app-icon name="cash" [size]="16"></app-icon>
+              <span>Pay Cash</span>
             </button>
             <button
               type="button"
@@ -226,7 +248,8 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
               [disabled]="pos.cart().length === 0"
               (click)="openPaymentModal('QR')"
             >
-              <span>📱 Pay QR</span>
+              <app-icon name="qr" [size]="16"></app-icon>
+              <span>Pay QR</span>
             </button>
             <button
               type="button"
@@ -234,7 +257,8 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
               [disabled]="pos.cart().length === 0"
               (click)="openPaymentModal('CARD')"
             >
-              <span>💳 Pay Card</span>
+              <app-icon name="card" [size]="16"></app-icon>
+              <span>Pay Card</span>
             </button>
           </div>
         </aside>
@@ -246,7 +270,9 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
           <div class="modal-content glass-panel" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2 class="modal-title">{{ selectedPaymentMethod }} Payment</h2>
-              <button type="button" class="close-modal-btn" (click)="closePaymentModal()">✖</button>
+              <button type="button" class="close-modal-btn" (click)="closePaymentModal()">
+                <app-icon name="close" [size]="16"></app-icon>
+              </button>
             </div>
 
             <div class="modal-body">
@@ -302,7 +328,8 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
                     </div>
                   </div>
                   <button type="button" class="glow-btn-primary simulate-btn" (click)="simulateQrSuccess()">
-                    ⚡ Simulate Customer Scan & Approval
+                    <app-icon name="bolt" [size]="16"></app-icon>
+                    <span>Simulate Customer Scan & Approval</span>
                   </button>
                 </div>
               }
@@ -310,7 +337,9 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
               <!-- Card Payment -->
               @if (selectedPaymentMethod === 'CARD') {
                 <div class="card-sim-section">
-                  <div class="card-terminal-icon">💳</div>
+                  <div class="card-terminal-icon">
+                    <app-icon name="card" [size]="48"></app-icon>
+                  </div>
                   <div class="card-instructions">Tap or insert card on POS terminal</div>
                 </div>
               }
@@ -375,7 +404,10 @@ import { Category, Product, CartItem } from '../../core/models/pos.models';
             </div>
 
             <div class="receipt-modal-actions">
-              <button type="button" class="glow-btn-secondary" (click)="printReceipt()">🖨️ Print Receipt</button>
+              <button type="button" class="glow-btn-secondary" (click)="printReceipt()">
+                <app-icon name="print" [size]="16"></app-icon>
+                <span>Print Receipt</span>
+              </button>
               <button type="button" class="glow-btn-primary" (click)="completedReceipt = null">New Order</button>
             </div>
           </div>
@@ -1174,11 +1206,8 @@ export class PosComponent implements OnInit {
   }
 
   getCategoryIcon(id: string): string {
-    if (id.includes('coffee')) return '☕';
-    if (id.includes('burger')) return '🍔';
-    if (id.includes('main')) return '🍛';
-    if (id.includes('dessert')) return '🍰';
-    if (id.includes('drink')) return '🍹';
-    return '📦';
+    if (id.includes('coffee') || id.includes('drink')) return 'coffee';
+    if (id.includes('dessert') || id.includes('bakery')) return 'dessert';
+    return 'food';
   }
 }

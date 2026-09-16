@@ -5,10 +5,12 @@ import { HeaderComponent } from '../../shared/header.component';
 import { RegisterService } from '../../core/services/register.service';
 import { AuthService } from '../../core/services/auth.service';
 
+import { IconComponent } from '../../shared/icon.component';
+
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, IconComponent],
   template: `
     <div class="register-page">
       <app-header></app-header>
@@ -64,18 +66,21 @@ import { AuthService } from '../../core/services/auth.service';
           <div class="shift-actions glass-panel">
             <div class="actions-left">
               <button class="btn btn-secondary" (click)="openCashMovementModal('CASH_IN')">
-                <span>➕ Add Cash (In)</span>
+                <app-icon name="plus" [size]="14"></app-icon>
+                <span>Add Cash (In)</span>
               </button>
               <button class="btn btn-secondary" (click)="openCashMovementModal('CASH_OUT')">
-                <span>➖ Petty Cash Out</span>
+                <app-icon name="minus" [size]="14"></app-icon>
+                <span>Petty Cash Out</span>
               </button>
               <button class="btn btn-outline" (click)="loadZReport()">
-                <span>📄 View Shift Z-Report</span>
+                <span>View Shift Z-Report</span>
               </button>
             </div>
             <div class="actions-right">
               <button class="btn btn-primary btn-danger-theme" (click)="openCloseRegisterModal()">
-                <span>🔒 Close Register & End Shift</span>
+                <app-icon name="lock" [size]="14"></app-icon>
+                <span>Close Register & End Shift</span>
               </button>
             </div>
           </div>
@@ -126,7 +131,9 @@ import { AuthService } from '../../core/services/auth.service';
         } @else {
           <!-- Closed Register: Open Register Form -->
           <div class="open-register-container glass-panel">
-            <div class="open-reg-icon">💵</div>
+            <div class="open-reg-icon">
+              <app-icon name="cash" [size]="48"></app-icon>
+            </div>
             <h2>Register is Currently Closed</h2>
             <p>Start a new cashier shift by declaring the starting physical cash float in the cash drawer.</p>
 
@@ -164,7 +171,7 @@ import { AuthService } from '../../core/services/auth.service';
               </div>
 
               <button type="submit" class="btn btn-primary btn-lg full-w">
-                <span>🚀 Open Shift & Initialize Drawer</span>
+                <span>Open Shift & Initialize Drawer</span>
               </button>
             </form>
           </div>
@@ -177,7 +184,9 @@ import { AuthService } from '../../core/services/auth.service';
           <div class="modal-window glass-panel" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2>{{ movementType === 'CASH_IN' ? 'Add Cash to Drawer' : 'Petty Cash Payout' }}</h2>
-              <button class="btn-close" (click)="showMovementModal = false">✕</button>
+              <button class="btn-close" (click)="showMovementModal = false">
+                <app-icon name="close" [size]="16"></app-icon>
+              </button>
             </div>
             <div class="modal-body">
               <div class="form-group">
@@ -226,7 +235,9 @@ import { AuthService } from '../../core/services/auth.service';
           <div class="modal-window glass-panel close-reg-modal" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2>Close Register & Shift Reconciliation</h2>
-              <button class="btn-close" (click)="showCloseModal = false">✕</button>
+              <button class="btn-close" (click)="showCloseModal = false">
+                <app-icon name="close" [size]="16"></app-icon>
+              </button>
             </div>
             <div class="modal-body">
               <div class="reconciliation-box">
@@ -276,7 +287,9 @@ import { AuthService } from '../../core/services/auth.service';
           <div class="modal-window glass-panel receipt-preview" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2>Official Shift Z-Report</h2>
-              <button class="btn-close" (click)="showZReportModal = false">✕</button>
+              <button class="btn-close" (click)="showZReportModal = false">
+                <app-icon name="close" [size]="16"></app-icon>
+              </button>
             </div>
             <div class="modal-body receipt-scroll">
               <div class="thermal-receipt">
@@ -332,7 +345,10 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
             <div class="modal-footer">
               <button class="btn btn-secondary" (click)="showZReportModal = false">Close</button>
-              <button class="btn btn-primary" (click)="printZReport()">🖨️ Print Report</button>
+              <button class="btn btn-primary" (click)="printZReport()">
+                <app-icon name="print" [size]="14"></app-icon>
+                <span>Print Report</span>
+              </button>
             </div>
           </div>
         </div>

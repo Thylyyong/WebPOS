@@ -6,10 +6,12 @@ import { SettingService } from '../../core/services/setting.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Branch } from '../../core/models/pos.models';
 
+import { IconComponent } from '../../shared/icon.component';
+
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, IconComponent],
   template: `
     <div class="settings-page">
       <app-header></app-header>
@@ -24,10 +26,14 @@ import { Branch } from '../../core/models/pos.models';
 
           <div class="save-actions">
             @if (saveSuccess) {
-              <span class="save-toast">✓ Settings saved successfully!</span>
+              <span class="save-toast">
+                <app-icon name="check" [size]="14"></app-icon>
+                <span>Settings saved successfully!</span>
+              </span>
             }
             <button class="btn btn-primary" (click)="saveSettings()">
-              <span>💾 Save Settings</span>
+              <app-icon name="save" [size]="16"></app-icon>
+              <span>Save Settings</span>
             </button>
           </div>
         </div>
