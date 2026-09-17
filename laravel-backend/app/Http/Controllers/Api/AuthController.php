@@ -85,6 +85,10 @@ class AuthController extends Controller
      */
     public function switchBranch(Request $request)
     {
+        if (! $request->user()->isMainBoss()) {
+            abort(403, 'Only Boss can switch branches.');
+        }
+
         $request->validate([
             'branch_id' => 'required|string|exists:branches,id',
         ]);
