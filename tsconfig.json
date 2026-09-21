@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["vue-frontend/src/*"]
+    }
+  },
+  "include": [
+    "vue-frontend/src/**/*.ts",
+    "vue-frontend/src/**/*.d.ts",
+    "vue-frontend/src/**/*.vue"
+  ]
+}
