@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Product } from '../../types/pos.types';
-import { Plus } from 'lucide-vue-next';
+import { Plus, ImageIcon } from 'lucide-vue-next';
 
 const props = defineProps<{
   product: Product;
@@ -14,46 +14,35 @@ const emit = defineEmits<{
 <template>
   <div
     @click="emit('add', product)"
-    class="group relative bg-slate-900/90 border border-slate-800/90 hover:border-emerald-500/50 rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer select-none transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5),0_0_15px_rgba(16,185,129,0.15)] active:scale-95"
+    class="group relative bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-3 flex flex-col cursor-pointer select-none transition-all duration-200 hover:shadow-md active:scale-95"
   >
-    <!-- Card Top Header -->
-    <div class="flex items-start justify-between gap-2">
-      <div class="flex-1 min-w-0">
-        <h4 class="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2 leading-snug">
-          {{ product.name }}
-        </h4>
-        <div class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-400">
-          <span v-if="product.sku" class="font-mono">{{ product.sku }}</span>
-          <span v-if="product.sku && product.barcode">•</span>
-          <span v-if="product.barcode" class="font-mono text-slate-500">{{ product.barcode }}</span>
-        </div>
+    <!-- Image placeholder -->
+    <div class="w-full aspect-square rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-2.5">
+      <ImageIcon class="w-7 h-7 text-slate-300" />
+    </div>
+
+    <h4 class="text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors line-clamp-2 leading-snug min-h-[2.4em]">
+      {{ product.name }}
+    </h4>
+
+    <!-- Card Bottom Info -->
+    <div class="mt-2 flex items-center justify-between">
+      <div class="text-[15px] font-extrabold text-teal-600 tracking-tight">
+        ${{ product.price.toFixed(2) }}
       </div>
 
-      <!-- Quick Add Button Pill -->
-      <div class="w-8 h-8 rounded-xl bg-slate-800 group-hover:bg-emerald-600 group-hover:text-white text-slate-400 flex items-center justify-center transition-colors shrink-0 shadow-sm">
+      <div class="w-8 h-8 rounded-full bg-teal-600 group-hover:bg-teal-700 text-white flex items-center justify-center transition-colors shrink-0 shadow-sm">
         <Plus class="w-4 h-4" />
       </div>
     </div>
 
-    <!-- Card Bottom Info -->
-    <div class="mt-4 pt-2 border-t border-slate-800/60 flex items-center justify-between">
-      <!-- Price -->
-      <div class="text-base font-extrabold text-emerald-400 tracking-tight font-mono">
-        ${{ product.price.toFixed(2) }}
-      </div>
-
-      <!-- Stock Status Badge -->
-      <div
-        class="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
-        :class="{
-          'bg-emerald-950/50 text-emerald-300 border-emerald-500/20': product.stock_quantity > 10,
-          'bg-amber-950/50 text-amber-300 border-amber-500/20': product.stock_quantity <= 10 && product.stock_quantity > 0,
-          'bg-rose-950/50 text-rose-300 border-rose-500/20': product.stock_quantity <= 0
-        }"
-      >
-        <span v-if="product.stock_quantity > 0">Stock: {{ product.stock_quantity }}</span>
-        <span v-else>Out of Stock</span>
-      </div>
+    <div
+      v-if="product.stock_quantity <= 10"
+      class="absolute top-2 right-2 text-[9.5px] font-bold px-1.5 py-0.5 rounded-md"
+      :class="product.stock_quantity > 0 ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-rose-50 text-rose-600 border border-rose-200'"
+    >
+      <span v-if="product.stock_quantity > 0">Low: {{ product.stock_quantity }}</span>
+      <span v-else>Out of Stock</span>
     </div>
   </div>
 </template>

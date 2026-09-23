@@ -6,8 +6,10 @@ const props = withDefaults(defineProps<{
   show: boolean;
   title?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+  light?: boolean;
 }>(), {
-  maxWidth: 'md'
+  maxWidth: 'md',
+  light: false
 });
 
 const emit = defineEmits<{
@@ -40,24 +42,32 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown));
         @click.self="emit('close')"
       >
         <div
-          class="bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl w-full overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
-          :class="{
-            'max-w-sm': maxWidth === 'sm',
-            'max-w-md': maxWidth === 'md',
-            'max-w-lg': maxWidth === 'lg',
-            'max-w-xl': maxWidth === 'xl',
-            'max-w-2xl': maxWidth === '2xl',
-            'max-w-3xl': maxWidth === '3xl',
-          }"
+          class="border rounded-2xl shadow-2xl w-full overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
+          :class="[
+            light ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-700/80',
+            {
+              'max-w-sm': maxWidth === 'sm',
+              'max-w-md': maxWidth === 'md',
+              'max-w-lg': maxWidth === 'lg',
+              'max-w-xl': maxWidth === 'xl',
+              'max-w-2xl': maxWidth === '2xl',
+              'max-w-3xl': maxWidth === '3xl',
+            }
+          ]"
         >
           <!-- Modal Header -->
-          <div v-if="title || $slots.header" class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+          <div
+            v-if="title || $slots.header"
+            class="px-5 py-4 border-b flex items-center justify-between"
+            :class="light ? 'border-slate-100 bg-white' : 'border-slate-800 bg-slate-900/60'"
+          >
             <slot name="header">
-              <h3 class="text-lg font-bold text-white tracking-wide">{{ title }}</h3>
+              <h3 class="text-lg font-bold tracking-wide" :class="light ? 'text-slate-800' : 'text-white'">{{ title }}</h3>
             </slot>
             <button
               @click="emit('close')"
-              class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              class="w-8 h-8 rounded-lg flex items-center justify-center transition"
+              :class="light ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
             >
               <X class="w-5 h-5" />
             </button>
@@ -69,7 +79,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown));
           </div>
 
           <!-- Modal Footer -->
-          <div v-if="$slots.footer" class="px-5 py-4 border-t border-slate-800 bg-slate-900/40 flex items-center justify-end gap-3">
+          <div
+            v-if="$slots.footer"
+            class="px-5 py-4 border-t flex items-center justify-end gap-3"
+            :class="light ? 'border-slate-100 bg-white' : 'border-slate-800 bg-slate-900/40'"
+          >
             <slot name="footer" />
           </div>
         </div>

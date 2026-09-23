@@ -8,6 +8,10 @@ import TablesView from '../views/TablesView.vue';
 import RegisterView from '../views/RegisterView.vue';
 import AccountingView from '../views/AccountingView.vue';
 import SettingsView from '../views/SettingsView.vue';
+import MenuCategoriesView from '../views/MenuCategoriesView.vue';
+import ProductsView from '../views/ProductsView.vue';
+import HistoryView from '../views/HistoryView.vue';
+import AnalyticsView from '../views/AnalyticsView.vue';
 
 const routes = [
   {
@@ -33,6 +37,30 @@ const routes = [
     name: 'register',
     component: RegisterView,
     meta: { requiresAuth: true, title: 'Cash Register' }
+  },
+  {
+    path: '/menu/products',
+    name: 'menu-products',
+    component: ProductsView,
+    meta: { requiresAuth: true, requiresBoss: true, title: 'Product & SKU Catalog' }
+  },
+  {
+    path: '/menu/categories',
+    name: 'menu-categories',
+    component: MenuCategoriesView,
+    meta: { requiresAuth: true, requiresBoss: true, title: 'Menu & Categories' }
+  },
+  {
+    path: '/history',
+    name: 'history',
+    component: HistoryView,
+    meta: { requiresAuth: true, title: 'Order History' }
+  },
+  {
+    path: '/analytics',
+    name: 'analytics',
+    component: AnalyticsView,
+    meta: { requiresAuth: true, requiresBoss: true, title: 'Sales & Performance' }
   },
   {
     path: '/accounting',

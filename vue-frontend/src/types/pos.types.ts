@@ -232,4 +232,7 @@ export interface StoreSettings {
   receipt_header: string;
   receipt_footer: string;
   logo_path?: string;
+  // Stored via the same generic Setting key/value store (POST /settings).
+  qr_code_image?: string;
+  khqr_payload?: string;
 }

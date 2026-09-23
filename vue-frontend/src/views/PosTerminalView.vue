@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useCartStore } from '../stores/cart.store';
-import AppHeader from '../components/common/AppHeader.vue';
+import PosTopBar from '../components/common/PosTopBar.vue';
 import ProductGrid from '../components/pos/ProductGrid.vue';
 import CartSidebar from '../components/pos/CartSidebar.vue';
 import { ShoppingBag } from 'lucide-vue-next';
@@ -11,9 +11,9 @@ const mobileCartOpen = ref(false);
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col bg-[#090D16] overflow-hidden">
-    <!-- Top Global POS Bar -->
-    <AppHeader />
+  <div class="h-screen w-screen flex flex-col bg-[#F5F7FA] overflow-hidden">
+    <!-- Top POS Bar -->
+    <PosTopBar />
 
     <!-- Main POS Layout -->
     <main class="flex-1 flex overflow-hidden relative">

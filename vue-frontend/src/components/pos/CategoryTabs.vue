@@ -21,14 +21,14 @@ function getCategoryIcon(name: string) {
       @click="catalogStore.selectCategory(null)"
       class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs whitespace-nowrap transition-all border shrink-0"
       :class="catalogStore.selectedCategoryId === null
-        ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-        : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'"
+        ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
+        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'"
     >
       <LayoutGrid class="w-4 h-4" />
-      <span>All Products</span>
+      <span>All</span>
       <span
         class="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-        :class="catalogStore.selectedCategoryId === null ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-400'"
+        :class="catalogStore.selectedCategoryId === null ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-500'"
       >
         {{ catalogStore.products.length }}
       </span>
@@ -42,15 +42,15 @@ function getCategoryIcon(name: string) {
       @click="catalogStore.selectCategory(cat.id)"
       class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs whitespace-nowrap transition-all border shrink-0"
       :class="catalogStore.selectedCategoryId === cat.id
-        ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-        : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'"
+        ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
+        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'"
     >
       <component :is="getCategoryIcon(cat.name)" class="w-4 h-4" />
       <span>{{ cat.name }}</span>
       <span
         v-if="cat.products_count !== undefined"
         class="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-        :class="catalogStore.selectedCategoryId === cat.id ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-400'"
+        :class="catalogStore.selectedCategoryId === cat.id ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-500'"
       >
         {{ cat.products_count }}
       </span>
