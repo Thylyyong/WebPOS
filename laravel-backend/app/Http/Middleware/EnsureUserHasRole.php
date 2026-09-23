@@ -16,9 +16,16 @@ class EnsureUserHasRole
             abort(401, 'Unauthenticated.');
         }
 
+        if ($user->isMainBoss()) {
+            return $next($request);
+        }
+
         foreach ($roles as $role) {
             $method = 'is' . str_replace('_', '', ucwords($role, '_'));
             if (method_exists($user, $method) && $user->$method()) {
+                return $next($request);
+            }
+            if (strtoupper($user->role) === strtoupper($role)) {
                 return $next($request);
             }
         }

@@ -15,7 +15,7 @@ class AuthController extends Controller
      */
     public function roles()
     {
-        $users = User::with('branch')
+        $users = User::with(['branch', 'roleDefinition'])
             ->where('is_active', true)
             ->get()
             ->map(function ($u) {
@@ -24,6 +24,7 @@ class AuthController extends Controller
                     'name' => $u->name,
                     'username' => $u->username,
                     'role' => $u->role,
+                    'role_name' => $u->roleDefinition?->name ?? $u->role,
                     'branch_id' => $u->branch_id,
                     'branch_name' => $u->branch?->branch_name ?? 'Global Enterprise',
                 ];

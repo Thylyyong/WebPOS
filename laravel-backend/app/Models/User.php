@@ -58,7 +58,7 @@ class User extends Authenticatable
 
     public function isMainBoss(): bool
     {
-        return in_array($this->role, ['BOSS', 'MAIN_BOSS', 'OWNER']);
+        return in_array($this->role, ['BOSS', 'MAIN_BOSS', 'OWNER', 'ADMIN']);
     }
 
     public function isSubBoss(): bool
@@ -69,5 +69,24 @@ class User extends Authenticatable
     public function isCashier(): bool
     {
         return in_array($this->role, ['CASHIER', 'STAFF_CASHIER']);
+    }
+
+    public function roleDefinition()
+    {
+        return $this->belongsTo(Role::class, 'role', 'code');
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isMainBoss()) {
+            return true;
+        }
+
+        $roleDef = Role::where('code', $this->role)->first();
+        if (!$roleDef || empty($roleDef->permissions)) {
+            return false;
+        }
+
+        return in_array($permission, $roleDef->permissions);
     }
 }

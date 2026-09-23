@@ -84,6 +84,34 @@ class CatalogController extends Controller
     }
 
     /**
+     * Upload product image file directly
+     */
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
+        ]);
+
+        $uploadDir = public_path('uploads/products');
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $file = $request->file('image');
+        $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+        $file->move($uploadDir, $filename);
+
+        $relativePath = 'uploads/products/' . $filename;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Image uploaded successfully',
+            'image_path' => $relativePath,
+            'image_url' => url($relativePath),
+        ]);
+    }
+
+    /**
      * Create new catalog product (Main Boss / Store Manager)
      */
     public function storeProduct(Request $request)
@@ -99,12 +127,39 @@ class CatalogController extends Controller
             'description' => 'nullable|string',
             'stock_quantity' => 'nullable|integer|min:0',
             'tax_rate' => 'nullable|numeric|min:0',
+            'color_hex' => 'nullable|string',
+            'is_available' => 'nullable|boolean',
             'image_path' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
         ]);
 
+        // Handle direct file upload if present
+        if ($request->hasFile('image')) {
+            $uploadDir = public_path('uploads/products');
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $file = $request->file('image');
+            $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $filename);
+            $validated['image_path'] = 'uploads/products/' . $filename;
+        }
+
+        unset($validated['image']);
+
         $validated['id'] = 'prod_' . Str::random(8);
-        if (empty($validated['cost'])) {
+        if (!isset($validated['cost']) || $validated['cost'] === null) {
             $validated['cost'] = 0.00;
+        }
+        if (!isset($validated['stock_quantity'])) {
+            $validated['stock_quantity'] = 100;
+        }
+        $validated['in_stock'] = $validated['stock_quantity'] > 0 ? 1 : 0;
+        if (!isset($validated['tax_rate'])) {
+            $validated['tax_rate'] = 10.0;
+        }
+        if (!isset($validated['is_available'])) {
+            $validated['is_available'] = true;
         }
 
         $product = Product::create($validated);
@@ -114,6 +169,81 @@ class CatalogController extends Controller
             'message' => 'Product added to catalog successfully',
             'product' => $product->load(['category', 'subcategory']),
         ], 201);
+    }
+
+    /**
+     * Update an existing product (Main Boss / Store Manager)
+     */
+    public function updateProduct(Request $request, string $id)
+    {
+        $product = Product::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'category_id' => 'sometimes|required|string|exists:categories,id',
+            'subcategory_id' => 'nullable|string',
+            'price' => 'sometimes|required|numeric|min:0',
+            'cost' => 'nullable|numeric|min:0',
+            'sku' => "nullable|string|unique:products,sku,{$id},id",
+            'barcode' => 'nullable|string',
+            'description' => 'nullable|string',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'tax_rate' => 'nullable|numeric|min:0',
+            'color_hex' => 'nullable|string',
+            'is_available' => 'nullable|boolean',
+            'image_path' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
+        ]);
+
+        // Handle uploaded file
+        if ($request->hasFile('image')) {
+            $uploadDir = public_path('uploads/products');
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $file = $request->file('image');
+            $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $filename);
+            $validated['image_path'] = 'uploads/products/' . $filename;
+        }
+
+        unset($validated['image']);
+
+        if (isset($validated['stock_quantity'])) {
+            $validated['in_stock'] = $validated['stock_quantity'] > 0 ? 1 : 0;
+        }
+
+        $product->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Product '{$product->name}' updated successfully",
+            'product' => $product->fresh(['category', 'subcategory']),
+        ]);
+    }
+
+    /**
+     * Delete or deactivate product
+     */
+    public function destroyProduct(string $id)
+    {
+        $product = Product::findOrFail($id);
+
+        // Check if there are order items referencing this product
+        if ($product->orderItems()->exists()) {
+            $product->update(['is_available' => false]);
+            return response()->json([
+                'success' => true,
+                'message' => "Product '{$product->name}' has order history; archived as unavailable.",
+            ]);
+        }
+
+        $product->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Product '{$product->name}' deleted successfully",
+        ]);
     }
 
     /**

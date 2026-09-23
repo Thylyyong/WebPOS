@@ -57,6 +57,54 @@ export const useCatalogStore = defineStore('catalog', () => {
     return null;
   }
 
+  async function addProduct(data: FormData | Record<string, any>): Promise<Product> {
+    const res = await catalogApi.createProduct(data);
+    if (res.data.success && res.data.product) {
+      products.value.unshift(res.data.product);
+      // update category count
+      const cat = categories.value.find(c => c.id === res.data.product.category_id);
+      if (cat) cat.products_count = (cat.products_count || 0) + 1;
+      return res.data.product;
+    }
+    throw new Error(res.data.message || 'Failed to add product');
+  }
+
+  async function editProduct(id: string, data: FormData | Record<string, any>): Promise<Product> {
+    const res = await catalogApi.updateProduct(id, data);
+    if (res.data.success && res.data.product) {
+      const idx = products.value.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        products.value[idx] = res.data.product;
+      }
+      return res.data.product;
+    }
+    throw new Error(res.data.message || 'Failed to update product');
+  }
+
+  async function removeProduct(id: string): Promise<void> {
+    const res = await catalogApi.deleteProduct(id);
+    if (res.data.success) {
+      const prod = products.value.find(p => p.id === id);
+      if (prod) {
+        const cat = categories.value.find(c => c.id === prod.category_id);
+        if (cat && cat.products_count && cat.products_count > 0) {
+          cat.products_count--;
+        }
+      }
+      products.value = products.value.filter(p => p.id !== id);
+      return;
+    }
+    throw new Error(res.data.message || 'Failed to delete product');
+  }
+
+  async function uploadProductImage(file: File) {
+    const res = await catalogApi.uploadProductImage(file);
+    if (res.data.success) {
+      return res.data;
+    }
+    throw new Error(res.data.message || 'Failed to upload image');
+  }
+
   function selectCategory(catId: string | null) {
     selectedCategoryId.value = catId;
   }
@@ -74,6 +122,10 @@ export const useCatalogStore = defineStore('catalog', () => {
     filteredProducts,
     fetchCatalog,
     lookupBarcode,
+    addProduct,
+    editProduct,
+    removeProduct,
+    uploadProductImage,
     selectCategory,
     setSearch
   };

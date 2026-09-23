@@ -186,6 +186,71 @@ Instant product lookup when a cashier scans a physical or digital barcode.
 }
 ```
 
+### 3.4 Upload Product Picture
+Upload image file directly for catalog items (`public/uploads/products/`).
+- **Endpoint**: `POST /api/catalog/upload-image`
+- **Headers**: `Content-Type: multipart/form-data`, `Authorization: Bearer {token}`
+- **Body**: `image: <file (jpg, png, webp up to 5MB)>`
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Image uploaded successfully",
+  "image_path": "uploads/products/prod_1727101234_abc12345.jpg",
+  "image_url": "http://127.0.0.1:8000/uploads/products/prod_1727101234_abc12345.jpg"
+}
+```
+
+### 3.5 Create Product
+Add a new menu item to the catalog (supports multipart form-data or JSON).
+- **Endpoint**: `POST /api/catalog/products`
+- **Headers**: `Authorization: Bearer {token}`
+- **Body**:
+```json
+{
+  "name": "Iced Vanilla Latte",
+  "category_id": "cat_coffee",
+  "price": 5.25,
+  "cost": 1.40,
+  "sku": "COF-009",
+  "barcode": "200009",
+  "stock_quantity": 50,
+  "tax_rate": 10.0,
+  "image_path": "uploads/products/prod_xxx.jpg"
+}
+```
+
+### 3.6 Update Product
+Edit an existing product and optionally replace picture.
+- **Endpoint**: `PUT /api/catalog/products/{id}` or `POST /api/catalog/products/{id}`
+- **Headers**: `Authorization: Bearer {token}`
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Product updated successfully",
+  "product": {
+    "id": "prod_espresso",
+    "name": "Artisan Espresso Deluxe",
+    "price": 4.00,
+    "stock_quantity": 120,
+    "image_url": "http://127.0.0.1:8000/uploads/products/..."
+  }
+}
+```
+
+### 3.7 Delete Product
+Remove or archive a product from the catalog.
+- **Endpoint**: `DELETE /api/catalog/products/{id}`
+- **Headers**: `Authorization: Bearer {token}`
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Product deleted successfully"
+}
+```
+
 ---
 
 ## 🍽️ 4. Floor Plan & Dining Tables
@@ -525,3 +590,48 @@ export interface ProfitLoss {
   net_margin_percent: number;
 }
 ```
+
+---
+
+## 👥 10. Role & Staff Provisioning (Admin / Boss)
+
+### 10.1 List All Roles
+Returns all system and custom role definitions with counts of assigned users.
+- **Endpoint**: `GET /api/admin/roles`
+- **Headers**: `Authorization: Bearer {token}`
+
+### 10.2 Create Custom Role
+Allows Boss/Admin to dynamically define new roles (e.g., `BARISTA`, `CHEF`, `SUPERVISOR`, `WAITER`).
+- **Endpoint**: `POST /api/admin/roles`
+- **Headers**: `Authorization: Bearer {token}`
+- **Body**:
+```json
+{
+  "name": "Master Barista",
+  "code": "BARISTA",
+  "description": "Artisan beverage maker with order queue visibility",
+  "permissions": ["pos", "tables"]
+}
+```
+
+### 10.3 List All Staff Member Accounts
+Returns all staff user accounts with their login username, role, active status, and PIN.
+- **Endpoint**: `GET /api/admin/staff`
+- **Headers**: `Authorization: Bearer {token}`
+
+### 10.4 Create Staff Member Account
+Provision a new employee with a 4-digit security PIN and role assignment.
+- **Endpoint**: `POST /api/admin/staff`
+- **Headers**: `Authorization: Bearer {token}`
+- **Body**:
+```json
+{
+  "name": "Sam Barista",
+  "username": "sambarista",
+  "pin_code": "5678",
+  "role": "BARISTA",
+  "branch_id": "store_main"
+}
+```
+*(Once created, the staff profile automatically appears on the POS Login Screen and can authenticate via PIN!)*
+

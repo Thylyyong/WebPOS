@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\SettlementController;
 use App\Http\Controllers\Api\CustomerDisplayController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\RoleController;
 
 Route::get('/health', function () {
     return response()->json([
@@ -43,9 +44,25 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/products/barcode/{barcode}', [CatalogController::class, 'findByBarcode']);
 
         Route::middleware('role:main_boss,sub_boss')->group(function () {
+            Route::post('/upload-image', [CatalogController::class, 'uploadImage']);
             Route::post('/products', [CatalogController::class, 'storeProduct']);
+            Route::put('/products/{id}', [CatalogController::class, 'updateProduct']);
+            Route::post('/products/{id}', [CatalogController::class, 'updateProduct']); // support multipart update
+            Route::delete('/products/{id}', [CatalogController::class, 'destroyProduct']);
             Route::patch('/products/{id}/stock', [CatalogController::class, 'updateStock']);
         });
+    });
+
+    Route::middleware('role:main_boss,sub_boss')->prefix('admin')->group(function () {
+        Route::get('/roles', [RoleController::class, 'roles']);
+        Route::post('/roles', [RoleController::class, 'storeRole']);
+        Route::put('/roles/{id}', [RoleController::class, 'updateRole']);
+        Route::delete('/roles/{id}', [RoleController::class, 'destroyRole']);
+
+        Route::get('/staff', [RoleController::class, 'staffUsers']);
+        Route::post('/staff', [RoleController::class, 'storeStaffUser']);
+        Route::put('/staff/{id}', [RoleController::class, 'updateStaffUser']);
+        Route::delete('/staff/{id}', [RoleController::class, 'destroyStaffUser']);
     });
 
     Route::prefix('tables')->group(function () {

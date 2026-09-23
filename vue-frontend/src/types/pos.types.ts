@@ -1,11 +1,36 @@
 // Authentication & Roles
-export type UserRole = 'BOSS' | 'CASHIER' | 'MAIN_BOSS' | 'SUB_BOSS' | 'STAFF_CASHIER' | 'CHEF';
+export type UserRole = 'BOSS' | 'CASHIER' | 'MAIN_BOSS' | 'SUB_BOSS' | 'STAFF_CASHIER' | 'CHEF' | 'ADMIN' | 'MANAGER' | 'WAITER' | string;
+
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  code: string;
+  description?: string | null;
+  permissions?: string[];
+  is_system: boolean;
+  users_count?: number;
+  created_at?: string;
+}
+
+export interface StaffAccount {
+  id: number;
+  name: string;
+  username: string;
+  pin_code: string;
+  role: string;
+  role_name?: string;
+  branch_id?: string;
+  branch_name?: string;
+  is_active: boolean;
+  created_at?: string;
+}
 
 export interface User {
   id: number;
   name: string;
   username: string;
   role: UserRole;
+  role_name?: string;
   branch_id: string;
   branch_name: string;
   is_main_boss?: boolean;
@@ -42,19 +67,22 @@ export interface Category {
 export interface Product {
   id: string;
   category_id: string;
-  subcategory_id?: string;
-  sku?: string;
+  subcategory_id?: string | null;
+  sku?: string | null;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
   cost: number;
-  barcode?: string;
-  image_path?: string;
+  barcode?: string | null;
+  image_path?: string | null;
+  image_url?: string | null;
   in_stock?: number;
   stock_quantity: number;
   tax_rate: number;
   color_hex?: string;
   is_available: boolean;
+  category?: Category;
+  subcategory?: Subcategory;
 }
 
 // Cart & Orders

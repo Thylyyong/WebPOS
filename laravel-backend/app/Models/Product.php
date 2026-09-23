@@ -36,6 +36,22 @@ class Product extends Model
         'is_available' => 'boolean',
     ];
 
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (empty($this->image_path)) {
+            return null;
+        }
+
+        if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://') || str_starts_with($this->image_path, 'data:image/')) {
+            return $this->image_path;
+        }
+
+        $cleanPath = ltrim($this->image_path, '/');
+        return url($cleanPath);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
