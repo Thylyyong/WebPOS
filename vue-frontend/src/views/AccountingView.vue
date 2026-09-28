@@ -2,12 +2,11 @@
 import { ref, onMounted } from 'vue';
 import { useAccountingStore } from '../stores/accounting.store';
 import { useAuthStore } from '../stores/auth.store';
-import AppHeader from '../components/common/AppHeader.vue';
+import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import MetricStatCard from '../components/accounting/MetricStatCard.vue';
 import FranchiseSettlement from '../components/accounting/FranchiseSettlement.vue';
 import ExpenseLoggerModal from '../components/accounting/ExpenseLoggerModal.vue';
 import { 
-  TrendingUp, 
   DollarSign, 
   Receipt, 
   PiggyBank, 
@@ -32,47 +31,33 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col bg-[#090D16] overflow-hidden select-none">
-    <AppHeader />
+  <AppSidebarShell>
+    <template #title>P&amp;L Financials</template>
+    <template #subtitle>Revenue, expenses, and profit for this branch</template>
+    <template #actions>
+      <button
+        type="button"
+        @click="showExpenseModal = true"
+        class="h-8 px-3 rounded-lg bg-teal-600 text-white flex items-center gap-1.5 text-xs font-semibold hover:bg-teal-700"
+      >
+        <PlusCircle class="w-3.5 h-3.5" />
+        <span>Record Expense</span>
+      </button>
+      <button
+        type="button"
+        @click="refreshFinancials"
+        class="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition"
+        aria-label="Refresh financial data"
+        title="Refresh financial data"
+      >
+        <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': accountingStore.isLoading }" />
+      </button>
+    </template>
 
-    <main class="flex-1 p-4 sm:p-6 overflow-y-auto max-w-6xl mx-auto w-full flex flex-col gap-6">
-      <!-- Title & Actions Bar -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-xl font-black text-white flex items-center gap-2.5">
-              <TrendingUp class="w-6 h-6 text-emerald-400" />
-              <span>Store Financials & P&L Analytics</span>
-            </h2>
-            <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              Boss Only
-            </span>
-          </div>
-          <p class="text-xs text-slate-400 mt-0.5">Real-time revenue, COGS, operating expenses, and franchise royalties.</p>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            @click="showExpenseModal = true"
-            class="h-10 px-4 rounded-xl glow-btn-primary flex items-center gap-2 text-xs font-bold"
-          >
-            <PlusCircle class="w-4 h-4" />
-            <span>Record Expense</span>
-          </button>
-
-          <button
-            type="button"
-            @click="refreshFinancials"
-            class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition"
-          >
-            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': accountingStore.isLoading }" />
-          </button>
-        </div>
-      </div>
+    <div class="max-w-6xl mx-auto w-full flex flex-col gap-5 sm:gap-6">
 
       <!-- Financial KPI Stat Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3.5">
         <MetricStatCard
           title="Gross Sales"
           :value="`$${(accountingStore.profitLoss?.gross_sales || 0).toFixed(2)}`"
@@ -120,7 +105,7 @@ onMounted(() => {
       <FranchiseSettlement />
 
       <!-- Expenses Table Ledger -->
-      <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3">
+      <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3">
         <div class="flex items-center justify-between">
           <h4 class="text-sm font-bold text-white">Recent Operating Expenses</h4>
           <span class="text-xs text-slate-500">{{ accountingStore.expenses.length }} entries</span>
@@ -131,7 +116,7 @@ onMounted(() => {
         </div>
 
         <div v-else class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
+          <table class="w-full min-w-[640px] text-left text-xs">
             <thead>
               <tr class="border-b border-slate-800 text-slate-400 font-bold uppercase text-[10px]">
                 <th class="pb-2">Date</th>
@@ -161,7 +146,7 @@ onMounted(() => {
           </table>
         </div>
       </div>
-    </main>
+    </div>
 
     <!-- Record Expense Modal -->
     <ExpenseLoggerModal
@@ -169,5 +154,5 @@ onMounted(() => {
       @close="showExpenseModal = false"
       @logged="refreshFinancials"
     />
-  </div>
+  </AppSidebarShell>
 </template>

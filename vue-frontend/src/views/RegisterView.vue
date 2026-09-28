@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRegisterStore } from '../stores/register.store';
 import { useAuthStore } from '../stores/auth.store';
 import { useUiStore } from '../stores/ui.store';
-import AppHeader from '../components/common/AppHeader.vue';
+import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import OpenShiftModal from '../components/register/OpenShiftModal.vue';
 import CashMovementModal from '../components/register/CashMovementModal.vue';
 import CloseShiftModal from '../components/register/CloseShiftModal.vue';
@@ -59,28 +59,21 @@ async function viewLastZReport() {
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col bg-[#090D16] overflow-hidden select-none">
-    <AppHeader />
+  <AppSidebarShell>
+    <template #title>Cash Register</template>
+    <template #subtitle>Manage drawer floats, cash movements, and shift reports</template>
+    <template #actions>
+      <button
+        type="button"
+        @click="refreshSession"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+      >
+        <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': registerStore.isLoading }" />
+        <span>Refresh</span>
+      </button>
+    </template>
 
-    <main class="flex-1 p-4 sm:p-6 overflow-y-auto max-w-5xl mx-auto w-full flex flex-col gap-6">
-      <!-- Title & Status Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-xl font-black text-white flex items-center gap-2.5">
-            <Landmark class="w-6 h-6 text-emerald-400" />
-            <span>Shift Register & Cash Drawer</span>
-          </h2>
-          <p class="text-xs text-slate-400 mt-0.5">Manage daily drawer floats, petty cash movements, and audit Z-Reports.</p>
-        </div>
-
-        <button
-          @click="refreshSession"
-          class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition self-start"
-        >
-          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': registerStore.isLoading }" />
-          <span>Refresh Status</span>
-        </button>
-      </div>
+    <div class="min-h-full max-w-5xl mx-auto w-full flex flex-col gap-5 sm:gap-6">
 
       <!-- State 1: Register is OPEN -->
       <div v-if="registerStore.hasActiveSession && registerStore.activeSession" class="flex flex-col gap-6">
@@ -189,7 +182,7 @@ async function viewLastZReport() {
           <span>Open Shift Register</span>
         </button>
       </div>
-    </main>
+    </div>
 
     <!-- Shift Register Modals -->
     <OpenShiftModal
@@ -215,5 +208,5 @@ async function viewLastZReport() {
       :data="currentZReportData"
       @close="showZReportModal = false"
     />
-  </div>
+  </AppSidebarShell>
 </template>

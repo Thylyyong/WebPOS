@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import { catalogApi } from '../api/catalog.api';
 import { useUiStore } from '../stores/ui.store';
 import type { Category, Product } from '../types/pos.types';
-import { Plus, Search, Pencil, Trash2, RefreshCw, X, Package } from 'lucide-vue-next';
+import { Plus, Search, Pencil, Trash2, RefreshCw, X, Package, ImagePlus } from 'lucide-vue-next';
 
 const uiStore = useUiStore();
 const categories = ref<Category[]>([]);
@@ -46,6 +46,9 @@ function categoryPath(p: Product) {
 /* ---------------- Add Product (real, backed by POST /catalog/products) ---------------- */
 const showAddModal = ref(false);
 const isSaving = ref(false);
+const imageInput = ref<HTMLInputElement | null>(null);
+const selectedImage = ref<File | null>(null);
+const imagePreviewUrl = ref('');
 const form = ref({
   name: '',
   category_id: '',
@@ -61,8 +64,37 @@ const form = ref({
 const formSubcategories = computed(() => categories.value.find(c => c.id === form.value.category_id)?.subcategories || []);
 
 function openAdd() {
+  clearSelectedImage();
   form.value = { name: '', category_id: categories.value[0]?.id || '', subcategory_id: '', price: 0, cost: 0, sku: '', barcode: '', stock_quantity: 0, tax_rate: 10 };
   showAddModal.value = true;
+}
+
+function closeAdd() {
+  showAddModal.value = false;
+  clearSelectedImage();
+}
+
+function clearSelectedImage() {
+  if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value);
+  imagePreviewUrl.value = '';
+  selectedImage.value = null;
+  if (imageInput.value) imageInput.value.value = '';
+}
+
+onBeforeUnmount(clearSelectedImage);
+
+function handleImageSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    uiStore.showToast('Please select an image file', 'warning');
+    input.value = '';
+    return;
+  }
+  if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value);
+  selectedImage.value = file;
+  imagePreviewUrl.value = URL.createObjectURL(file);
 }
 
 async function submitAdd() {
@@ -85,7 +117,7 @@ async function submitAdd() {
     });
     if (res.data.success) {
       uiStore.showToast('Product added to catalog', 'success');
-      showAddModal.value = false;
+      closeAdd();
       await load();
     }
   } catch (err: any) {
@@ -160,8 +192,9 @@ function deleteNotSupported() {
 
     <div class="bg-white rounded-xl border border-slate-200 divide-y divide-slate-50">
       <div v-for="p in filtered" :key="p.id" class="flex items-center gap-4 px-4 py-3">
-        <div class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
-          <Package class="w-4 h-4 text-slate-300" />
+        <div class="w-12 h-12 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+          <img v-if="p.image_path" :src="p.image_path" :alt="p.name" class="w-full h-full object-cover" />
+          <Package v-else class="w-4 h-4 text-slate-300" />
         </div>
         <div class="min-w-0 flex-1">
           <div class="text-[13px] font-bold text-slate-800 truncate">{{ p.name }}</div>
@@ -186,13 +219,33 @@ function deleteNotSupported() {
     </div>
 
     <!-- Add Product Modal -->
-    <div v-if="showAddModal" class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4" @click.self="showAddModal = false">
+    <div v-if="showAddModal" class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4" @click.self="closeAdd">
       <div class="bg-white rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-[15px] font-bold text-slate-800">Add Product</h3>
-          <button @click="showAddModal = false" class="text-slate-400 hover:text-slate-600"><X class="w-4 h-4" /></button>
+          <button @click="closeAdd" class="text-slate-400 hover:text-slate-600" aria-label="Close add product form"><X class="w-4 h-4" /></button>
         </div>
         <div class="space-y-3">
+          <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+            <div class="flex items-center gap-3">
+              <div class="w-20 h-20 rounded-lg border border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                <img v-if="imagePreviewUrl" :src="imagePreviewUrl" alt="Selected product preview" class="w-full h-full object-cover" />
+                <ImagePlus v-else class="w-6 h-6 text-slate-300" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[12px] font-semibold text-slate-700">Product image</p>
+                <p class="text-[10.5px] text-slate-400 truncate">{{ selectedImage?.name || 'Choose an image to preview it' }}</p>
+                <input ref="imageInput" type="file" accept="image/*" class="sr-only" @change="handleImageSelected" />
+                <div class="flex flex-wrap gap-2 mt-2">
+                  <button type="button" @click="imageInput?.click()" class="px-2.5 py-1 rounded-md bg-teal-600 text-white text-[11px] font-semibold hover:bg-teal-700">
+                    {{ imagePreviewUrl ? 'Replace picture' : 'Upload picture' }}
+                  </button>
+                  <button v-if="imagePreviewUrl" type="button" @click="clearSelectedImage" class="px-2.5 py-1 rounded-md border border-slate-200 text-slate-500 text-[11px] font-semibold hover:bg-white">Remove</button>
+                </div>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-2">Preview only. Image saving is not connected to the current product API.</p>
+          </div>
           <div>
             <label class="text-[11px] font-semibold text-slate-500">Name *</label>
             <input v-model="form.name" type="text" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-[13px]" />

@@ -2,10 +2,10 @@
 import { ref, onMounted } from 'vue';
 import { settingsApi } from '../api/settings.api';
 import { useUiStore } from '../stores/ui.store';
-import AppHeader from '../components/common/AppHeader.vue';
+import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import { useAuthStore } from '../stores/auth.store';
 import { useRouter } from 'vue-router';
-import { Settings, Save, Store, Receipt, Sliders, QrCode, ShieldCheck, LogOut, Trash2, Upload, Info } from 'lucide-vue-next';
+import { Save, Store, Receipt, Sliders, QrCode, ShieldCheck, LogOut, Trash2, Upload, Info } from 'lucide-vue-next';
 import type { StoreSettings } from '../types/pos.types';
 
 const uiStore = useUiStore();
@@ -77,35 +77,22 @@ async function saveSettings() {
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col bg-[#090D16] overflow-hidden select-none">
-    <AppHeader />
+  <AppSidebarShell>
+    <template #title>Settings</template>
+    <template #subtitle>Store profile, taxes, receipts, and payment details</template>
+    <template #actions>
+      <button
+        type="button"
+        @click="saveSettings"
+        :disabled="isSaving"
+        class="h-8 px-3 rounded-lg bg-teal-600 text-white flex items-center gap-1.5 text-xs font-semibold hover:bg-teal-700 disabled:opacity-50"
+      >
+        <Save class="w-3.5 h-3.5" />
+        <span>{{ isSaving ? 'Saving...' : 'Save Settings' }}</span>
+      </button>
+    </template>
 
-    <main class="flex-1 p-4 sm:p-6 overflow-y-auto max-w-4xl mx-auto w-full flex flex-col gap-6">
-      <!-- Title & Save Action Bar -->
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-xl font-black text-white flex items-center gap-2.5">
-              <Settings class="w-6 h-6 text-emerald-400" />
-              <span>Store & POS Terminal Settings</span>
-            </h2>
-            <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              Boss Only
-            </span>
-          </div>
-          <p class="text-xs text-slate-400 mt-0.5">Customize business identity, sales tax calculations, and thermal receipts.</p>
-        </div>
-
-        <button
-          type="button"
-          @click="saveSettings"
-          :disabled="isSaving"
-          class="h-10 px-5 rounded-xl glow-btn-primary flex items-center gap-2 text-xs font-bold transition disabled:opacity-50"
-        >
-          <Save class="w-4 h-4" />
-          <span>{{ isSaving ? 'Saving...' : 'Save Settings' }}</span>
-        </button>
-      </div>
+    <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
 
       <!-- Settings Cards Form -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -304,6 +291,6 @@ async function saveSettings() {
           </button>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
+  </AppSidebarShell>
 </template>

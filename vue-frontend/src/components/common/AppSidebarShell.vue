@@ -13,6 +13,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth.store';
 import {
   LayoutGrid,
+  ShoppingBag,
   Monitor,
   Grid3x3,
   ChevronDown,
@@ -24,7 +25,8 @@ import {
   Landmark,
   Settings as SettingsIcon,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  LogOut
 } from 'lucide-vue-next';
 
 const route = useRoute();
@@ -42,6 +44,11 @@ function isActivePrefix(prefix: string) {
 
 function go(path: string) {
   router.push(path);
+}
+
+function handleLogout() {
+  authStore.logout();
+  router.push('/login');
 }
 </script>
 
@@ -64,9 +71,19 @@ function go(path: string) {
       <nav class="flex-1 py-3 px-2.5 space-y-0.5 overflow-y-auto">
         <button
           type="button"
+          @click="go('/pos')"
+          class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition"
+          :class="isActive('/pos') ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'"
+        >
+          <ShoppingBag class="w-4 h-4" />
+          <span>POS Terminal</span>
+        </button>
+
+        <button
+          type="button"
           @click="go('/register')"
           class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition"
-          :class="isActive('/register') || isActive('/pos') ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'"
+          :class="isActive('/register') ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'"
         >
           <Monitor class="w-4 h-4" />
           <span>Register</span>
@@ -151,7 +168,7 @@ function go(path: string) {
       </nav>
 
       <!-- Settings (bottom) -->
-      <div class="p-2.5 border-t border-slate-100">
+      <div class="p-2.5 border-t border-slate-100 space-y-0.5">
         <button
           v-if="authStore.isBoss"
           type="button"
@@ -161,6 +178,14 @@ function go(path: string) {
         >
           <SettingsIcon class="w-4 h-4" />
           <span>Settings</span>
+        </button>
+        <button
+          type="button"
+          @click="handleLogout"
+          class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"
+        >
+          <LogOut class="w-4 h-4" />
+          <span>Log out</span>
         </button>
       </div>
     </aside>
