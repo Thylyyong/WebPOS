@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npm --prefix vue-frontend run dev",
     "build": "npm --prefix vue-frontend run build",
-    "dev:vue": "npm --prefix vue-frontend run dev",
-    "build:vue": "npm --prefix vue-frontend run build"
+    "backend": "php -S 127.0.0.1:8000 -t laravel-backend/public",
+    "server": "php -S 127.0.0.1:8000 -t laravel-backend/public"
   }
 }
