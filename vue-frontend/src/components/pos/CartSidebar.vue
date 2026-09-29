@@ -9,25 +9,34 @@ import PaymentModal from './PaymentModal.vue';
 import SplitBillModal from './SplitBillModal.vue';
 import ParkedOrdersModal from './ParkedOrdersModal.vue';
 import ReceiptModal from './ReceiptModal.vue';
-import { 
-  ShoppingBag, 
-  Trash2, 
-  PauseCircle, 
-  Split, 
-  CreditCard, 
-  FolderOpen, 
-  User, 
-  MapPin, 
-  X 
+import {
+  ShoppingBag,
+  Trash2,
+  PauseCircle,
+  Split,
+  Banknote,
+  QrCode,
+  FolderOpen,
+  User,
+  MapPin,
+  X
 } from 'lucide-vue-next';
+import type { PaymentMethod } from '../../types/pos.types';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 const showPaymentModal = ref(false);
+const paymentInitialMethod = ref<PaymentMethod>('CASH');
 const showSplitModal = ref(false);
 const showParkedModal = ref(false);
+
+function openPayment(method: PaymentMethod) {
+  if (cartStore.items.length === 0) return;
+  paymentInitialMethod.value = method;
+  showPaymentModal.value = true;
+}
 
 async function handleHoldCart() {
   if (cartStore.items.length === 0) return;
@@ -50,60 +59,67 @@ function handleClearCart() {
 </script>
 
 <template>
-  <aside class="w-full lg:w-96 xl:w-[420px] bg-slate-950/80 border-l border-slate-800/80 flex flex-col h-full select-none">
+  <aside class="w-full lg:w-96 xl:w-[420px] bg-white border-l border-slate-200 flex flex-col h-full select-none">
     <!-- Ticket Header -->
-    <div class="p-3.5 border-b border-slate-800 flex flex-col gap-2.5">
-      <!-- Order Type Selector & Recall Parked -->
+    <div class="p-3.5 border-b border-slate-100 flex flex-col gap-2.5">
       <div class="flex items-center justify-between">
-        <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-          <button
-            type="button"
-            @click="cartStore.orderType = 'DINE_IN'"
-            class="px-2.5 py-1 rounded-lg transition"
-            :class="cartStore.orderType === 'DINE_IN' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'"
-          >
-            Dine In
-          </button>
-          <button
-            type="button"
-            @click="cartStore.orderType = 'TAKEAWAY'"
-            class="px-2.5 py-1 rounded-lg transition"
-            :class="cartStore.orderType === 'TAKEAWAY' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'"
-          >
-            Takeaway
-          </button>
+        <div class="flex items-center gap-2">
+          <ShoppingBag class="w-4 h-4 text-teal-600" />
+          <h3 class="text-[13.5px] font-bold text-slate-800">Current Order</h3>
+          <span class="text-[10.5px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">
+            {{ cartStore.totalItemsCount }} items
+          </span>
         </div>
-
         <button
           type="button"
           @click="showParkedModal = true"
-          class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-amber-400 hover:bg-amber-950/20 border border-slate-800 transition"
+          class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-500 hover:text-amber-600 hover:bg-amber-50 border border-slate-200 transition"
         >
           <FolderOpen class="w-3.5 h-3.5" />
-          <span>Parked Tickets</span>
+          <span>Parked</span>
+        </button>
+      </div>
+
+      <!-- Order Type Selector -->
+      <div class="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200 text-xs font-semibold w-fit">
+        <button
+          type="button"
+          @click="cartStore.orderType = 'DINE_IN'"
+          class="px-2.5 py-1 rounded-lg transition"
+          :class="cartStore.orderType === 'DINE_IN' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+        >
+          Dine In
+        </button>
+        <button
+          type="button"
+          @click="cartStore.orderType = 'TAKEAWAY'"
+          class="px-2.5 py-1 rounded-lg transition"
+          :class="cartStore.orderType === 'TAKEAWAY' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+        >
+          Takeaway
         </button>
       </div>
 
       <!-- Guest & Table Meta -->
       <div class="flex items-center gap-2">
         <div class="flex-1 relative">
-          <User class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <User class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             v-model="cartStore.customerName"
             type="text"
             placeholder="Customer Name..."
-            class="w-full h-8 pl-8 pr-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+            class="w-full h-8 pl-8 pr-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-teal-500"
           />
         </div>
 
         <!-- Table Badge if assigned -->
         <div
           v-if="cartStore.selectedTable"
-          class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 text-xs font-bold"
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 text-xs font-bold"
         >
           <MapPin class="w-3 h-3" />
           <span>{{ cartStore.selectedTable.table_number }}</span>
-          <button @click="cartStore.selectedTable = null" class="text-indigo-400 hover:text-white">
+          <button @click="cartStore.selectedTable = null" class="text-teal-500 hover:text-teal-800">
             <X class="w-3 h-3" />
           </button>
         </div>
@@ -115,11 +131,11 @@ function handleClearCart() {
       <!-- Empty Cart State -->
       <div
         v-if="cartStore.items.length === 0"
-        class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500"
+        class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400"
       >
-        <ShoppingBag class="w-12 h-12 text-slate-700 mb-2 stroke-[1.5]" />
-        <h5 class="text-sm font-bold text-slate-400">Order is Empty</h5>
-        <p class="text-xs text-slate-600 mt-1 max-w-[200px]">Tap products on the menu or scan a barcode to begin.</p>
+        <ShoppingBag class="w-12 h-12 text-slate-200 mb-2 stroke-[1.5]" />
+        <h5 class="text-sm font-bold text-slate-500">Your cart is empty</h5>
+        <p class="text-xs text-slate-400 mt-1 max-w-[200px]">Tap products from menu to add.</p>
       </div>
 
       <!-- Item Rows -->
@@ -135,16 +151,16 @@ function handleClearCart() {
     </div>
 
     <!-- Cart Footer & Totals -->
-    <div class="p-3.5 border-t border-slate-800/90 bg-slate-950/90 flex flex-col gap-3">
+    <div class="p-3.5 border-t border-slate-100 bg-white flex flex-col gap-3">
       <CartTotals />
 
-      <!-- Action Buttons Row -->
+      <!-- Secondary Actions Row -->
       <div class="grid grid-cols-3 gap-2">
         <button
           type="button"
           @click="handleClearCart"
           :disabled="cartStore.items.length === 0"
-          class="h-10 rounded-xl bg-slate-900 hover:bg-rose-950/30 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-800/40 text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40 disabled:pointer-events-none"
+          class="h-9 rounded-xl bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-500 border border-slate-200 hover:border-rose-200 text-[11px] font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40 disabled:pointer-events-none"
         >
           <Trash2 class="w-3.5 h-3.5" />
           <span>Clear</span>
@@ -154,37 +170,48 @@ function handleClearCart() {
           type="button"
           @click="handleHoldCart"
           :disabled="cartStore.items.length === 0"
-          class="h-10 rounded-xl bg-slate-900 hover:bg-amber-950/30 text-slate-400 hover:text-amber-400 border border-slate-800 hover:border-amber-800/40 text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40 disabled:pointer-events-none"
+          class="h-9 rounded-xl bg-white hover:bg-amber-50 text-slate-500 hover:text-amber-600 border border-slate-200 hover:border-amber-200 text-[11px] font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40 disabled:pointer-events-none"
         >
           <PauseCircle class="w-3.5 h-3.5" />
-          <span>Hold Cart</span>
+          <span>Hold</span>
         </button>
 
         <button
           type="button"
           @click="showSplitModal = true"
           :disabled="cartStore.items.length === 0"
-          class="h-10 rounded-xl bg-slate-900 hover:bg-cyan-950/30 text-slate-400 hover:text-cyan-400 border border-slate-800 hover:border-cyan-800/40 text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40 disabled:pointer-events-none"
+          class="h-9 rounded-xl bg-white hover:bg-sky-50 text-slate-500 hover:text-sky-600 border border-slate-200 hover:border-sky-200 text-[11px] font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40 disabled:pointer-events-none"
         >
           <Split class="w-3.5 h-3.5" />
-          <span>Split Bill</span>
+          <span>Split</span>
         </button>
       </div>
 
-      <!-- Main Pay / Tender Button -->
-      <button
-        type="button"
-        @click="showPaymentModal = true"
-        :disabled="cartStore.items.length === 0"
-        class="w-full h-14 rounded-2xl glow-btn-primary flex items-center justify-center gap-2 text-base font-extrabold tracking-wide uppercase shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <CreditCard class="w-5 h-5" />
-        <span>Pay / Checkout (${{ cartStore.totalDue.toFixed(2) }})</span>
-      </button>
+      <!-- Pay Buttons (2x2, matching reference layout) -->
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          @click="openPayment('CASH')"
+          :disabled="cartStore.items.length === 0"
+          class="h-12 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 flex flex-col items-center justify-center gap-0.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Banknote class="w-4 h-4" />
+          <span class="text-[10.5px] font-extrabold tracking-wide">CASH PAY</span>
+        </button>
+        <button
+          type="button"
+          @click="openPayment('QR')"
+          :disabled="cartStore.items.length === 0"
+          class="h-12 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-0.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <QrCode class="w-4 h-4" />
+          <span class="text-[10.5px] font-extrabold tracking-wide">QR CODE</span>
+        </button>
+      </div>
     </div>
 
     <!-- Modals -->
-    <PaymentModal :show="showPaymentModal" @close="showPaymentModal = false" />
+    <PaymentModal :show="showPaymentModal" :initial-method="paymentInitialMethod" @close="showPaymentModal = false" />
     <SplitBillModal :show="showSplitModal" @close="showSplitModal = false" />
     <ParkedOrdersModal :show="showParkedModal" @close="showParkedModal = false" />
     <ReceiptModal />

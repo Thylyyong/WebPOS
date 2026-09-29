@@ -5,7 +5,7 @@ import { useTablesStore } from '../stores/tables.store';
 import { useCartStore } from '../stores/cart.store';
 import { useAuthStore } from '../stores/auth.store';
 import { useUiStore } from '../stores/ui.store';
-import AppHeader from '../components/common/AppHeader.vue';
+import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import TableCard from '../components/tables/TableCard.vue';
 import TableAssignModal from '../components/tables/TableAssignModal.vue';
 import TableTransferModal from '../components/tables/TableTransferModal.vue';
@@ -60,11 +60,12 @@ function handleOrder(table: DiningTable) {
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col bg-[#090D16] overflow-hidden select-none">
-    <AppHeader />
+  <AppSidebarShell>
+    <template #title>Floor Plan</template>
+    <template #subtitle>View table availability and manage active parties</template>
 
     <!-- Tables Management Body -->
-    <main class="flex-1 p-4 sm:p-6 flex flex-col gap-4 overflow-hidden max-w-7xl mx-auto w-full">
+    <div class="min-h-full flex flex-col gap-4">
       <!-- Top Floor Plan Action & Zone Bar -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
         <!-- Zone Filter Pills -->
@@ -84,8 +85,8 @@ function handleOrder(table: DiningTable) {
         </div>
 
         <!-- Occupancy Stats & Refresh -->
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2 text-xs font-semibold">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
             <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/40 text-emerald-300 border border-emerald-500/20">
               <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span>{{ tablesStore.availableCount }} Available</span>
@@ -110,7 +111,7 @@ function handleOrder(table: DiningTable) {
 
       <!-- Tables Grid -->
       <div class="flex-1 overflow-y-auto pr-1">
-        <div v-if="tablesStore.isLoading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div v-if="tablesStore.isLoading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
           <div v-for="n in 8" :key="n" class="h-44 rounded-2xl bg-slate-800/40 animate-pulse border border-slate-800" />
         </div>
 
@@ -123,7 +124,7 @@ function handleOrder(table: DiningTable) {
           <p class="text-xs text-slate-500">No tables configured for this zone.</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
           <TableCard
             v-for="table in tablesStore.filteredTables"
             :key="table.id"
@@ -135,7 +136,7 @@ function handleOrder(table: DiningTable) {
           />
         </div>
       </div>
-    </main>
+    </div>
 
     <!-- Modals -->
     <TableAssignModal
@@ -151,5 +152,5 @@ function handleOrder(table: DiningTable) {
       @close="showTransferModal = false"
       @transferred="refreshTables"
     />
-  </div>
+  </AppSidebarShell>
 </template>

@@ -14,7 +14,8 @@ import {
   ChefHat, 
   Coffee, 
   Users, 
-  Shield 
+  Shield,
+  LayoutGrid
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -102,6 +103,14 @@ function quickLogin(username: string, defaultPin: string) {
   pin.value = defaultPin;
   handlePinSubmit(defaultPin);
 }
+
+// Staff Cashier gets a one-tap sign-in (no PIN screen shown), matching the
+// reference screenshot; Boss still goes through the PIN pad below since
+// that role has full financial/oversight access.
+function instantCashierLogin() {
+  selectedUsername.value = 'cashier';
+  quickLogin('cashier', '1234');
+}
 </script>
 
 <template>
@@ -113,11 +122,14 @@ function quickLogin(username: string, defaultPin: string) {
     <div class="w-full max-w-lg flex flex-col items-center relative z-10">
       <!-- Brand Header -->
       <div class="flex flex-col items-center text-center mb-6">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-[0_0_30px_rgba(16,185,129,0.35)] mb-3">
-          <Store class="w-9 h-9" />
+        <div class="w-14 h-14 rounded-2xl bg-teal-600 flex items-center justify-center text-white shadow-lg mb-3">
+          <LayoutGrid class="w-7 h-7" />
         </div>
-        <h1 class="text-2xl font-black text-white tracking-tight">OmniPOS Terminal</h1>
-        <p class="text-xs text-slate-400 mt-1">Select staff profile & enter 4-digit PIN</p>
+        <h1 class="text-xl font-black text-slate-900 tracking-tight">Gourmet Bistro POS</h1>
+        <p class="text-[11px] text-slate-400 mt-0.5">OmniPOS Enterprise · Multi-Branch POS Suite</p>
+        <span class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 text-sky-600 border border-sky-200 text-[10px] font-bold">
+          100% OFFLINE READY · DUAL-SCREEN &amp; CASH DRAWER ACTIVE
+        </span>
       </div>
 
       <!-- Dynamic Role & Staff Selector Cards Grid -->
@@ -166,12 +178,31 @@ function quickLogin(username: string, defaultPin: string) {
           <span>Enter PIN for: <strong class="text-white capitalize font-mono">{{ selectedUsername }}</strong></span>
         </div>
 
-        <PinPad
-          v-model="pin"
+        <p class="text-[11px] text-slate-400 mb-4">
+          {{ selectedUsername === 'cashier' ? 'Instant frontline POS checkout' : 'Full oversight, P&L and settings access' }}
+        </p>
+
+        <!-- Cashier: one-tap sign in -->
+        <button
+          v-if="selectedUsername === 'cashier'"
+          type="button"
           :disabled="isSubmitting"
-          submit-label="SIGN IN"
-          @submit="handlePinSubmit"
-        />
+          @click="instantCashierLogin"
+          class="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[13px] font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
+        >
+          <Sparkles class="w-4 h-4" />
+          Login as Staff Cashier
+        </button>
+
+        <!-- Other roles: PIN required -->
+        <div v-else class="w-full flex flex-col items-center">
+          <PinPad
+            v-model="pin"
+            :disabled="isSubmitting"
+            submit-label="SIGN IN"
+            @submit="handlePinSubmit"
+          />
+        </div>
 
         <!-- One-Click Demo Shortcut Buttons -->
         <div class="mt-5 pt-4 border-t border-slate-800 w-full flex items-center justify-between text-xs gap-2">
@@ -196,8 +227,8 @@ function quickLogin(username: string, defaultPin: string) {
       </div>
 
       <!-- Footer Info -->
-      <div class="mt-6 text-center text-[11px] text-slate-500 font-medium">
-        OmniPOS Cloud • Connected to Laravel Backend (SQLite)
+      <div class="mt-5 text-center text-[10.5px] text-slate-400 font-medium">
+        Profile: POS CA9 (15.6" Landscape)
       </div>
     </div>
   </div>

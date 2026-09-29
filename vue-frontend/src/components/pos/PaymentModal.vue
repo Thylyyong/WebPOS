@@ -9,6 +9,7 @@ import type { PaymentMethod } from '../../types/pos.types';
 
 const props = defineProps<{
   show: boolean;
+  initialMethod?: PaymentMethod;
 }>();
 
 const emit = defineEmits<{
@@ -25,7 +26,7 @@ const isProcessing = ref(false);
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    selectedMethod.value = 'CASH';
+    selectedMethod.value = props.initialMethod || 'CASH';
     cashTendered.value = cartStore.totalDue;
   }
 });
@@ -75,22 +76,23 @@ async function handleCompletePayment() {
 <template>
   <AppModal
     :show="show"
+    light
     @close="emit('close')"
     title="Checkout & Tender Payment"
     max-width="lg"
   >
     <div class="flex flex-col gap-4 select-none">
       <!-- Total Due Banner -->
-      <div class="p-4 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex items-center justify-between">
+      <div class="p-4 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-between">
         <div>
-          <span class="text-xs uppercase font-bold tracking-wider text-slate-400">Total Amount Due</span>
-          <div class="text-3xl font-black text-emerald-400 font-mono tracking-tight mt-0.5">
+          <span class="text-xs uppercase font-bold tracking-wider text-teal-600/80">Total Amount Due</span>
+          <div class="text-3xl font-black text-teal-700 font-mono tracking-tight mt-0.5">
             ${{ cartStore.totalDue.toFixed(2) }}
           </div>
         </div>
         <div class="text-right">
-          <span class="text-xs text-slate-400 font-medium">Guest: {{ cartStore.customerName }}</span>
-          <div v-if="cartStore.selectedTable" class="text-xs text-emerald-400 font-semibold mt-0.5">
+          <span class="text-xs text-slate-500 font-medium">Guest: {{ cartStore.customerName }}</span>
+          <div v-if="cartStore.selectedTable" class="text-xs text-teal-600 font-semibold mt-0.5">
             {{ cartStore.selectedTable.table_number }}
           </div>
         </div>
@@ -103,8 +105,8 @@ async function handleCompletePayment() {
           @click="selectedMethod = 'CASH'"
           class="h-16 rounded-xl border flex flex-col items-center justify-center gap-1.5 font-bold text-xs transition"
           :class="selectedMethod === 'CASH'
-            ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'"
+            ? 'bg-teal-50 border-teal-400 text-teal-700'
+            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'"
         >
           <Banknote class="w-5 h-5" />
           <span>Cash</span>
@@ -115,8 +117,8 @@ async function handleCompletePayment() {
           @click="selectedMethod = 'CARD'"
           class="h-16 rounded-xl border flex flex-col items-center justify-center gap-1.5 font-bold text-xs transition"
           :class="selectedMethod === 'CARD'
-            ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'"
+            ? 'bg-teal-50 border-teal-400 text-teal-700'
+            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'"
         >
           <CreditCard class="w-5 h-5" />
           <span>Credit / Debit Card</span>
@@ -127,8 +129,8 @@ async function handleCompletePayment() {
           @click="selectedMethod = 'QR'"
           class="h-16 rounded-xl border flex flex-col items-center justify-center gap-1.5 font-bold text-xs transition"
           :class="selectedMethod === 'QR'
-            ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'"
+            ? 'bg-teal-50 border-teal-400 text-teal-700'
+            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'"
         >
           <QrCode class="w-5 h-5" />
           <span>QR PromptPay / Code</span>
@@ -136,8 +138,8 @@ async function handleCompletePayment() {
       </div>
 
       <!-- Cash Tendered Details (When Cash selected) -->
-      <div v-if="selectedMethod === 'CASH'" class="flex flex-col gap-3 p-4 bg-slate-950/70 border border-slate-800/80 rounded-2xl">
-        <label class="text-xs font-semibold text-slate-300">Cash Tendered by Customer</label>
+      <div v-if="selectedMethod === 'CASH'" class="flex flex-col gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+        <label class="text-xs font-semibold text-slate-500">Cash Tendered by Customer</label>
 
         <div class="relative">
           <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">$</span>
@@ -145,7 +147,7 @@ async function handleCompletePayment() {
             v-model.number="cashTendered"
             type="number"
             step="0.01"
-            class="w-full h-12 pl-8 pr-4 bg-slate-900 border border-slate-700 rounded-xl text-xl font-bold font-mono text-white focus:outline-none focus:border-emerald-500"
+            class="w-full h-12 pl-8 pr-4 bg-white border border-slate-200 rounded-xl text-xl font-bold font-mono text-slate-800 focus:outline-none focus:border-teal-500"
           />
         </div>
 
@@ -154,46 +156,46 @@ async function handleCompletePayment() {
           <button
             type="button"
             @click="setTender(cartStore.totalDue)"
-            class="h-10 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            class="h-10 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition"
           >
             Exact
           </button>
           <button
             type="button"
             @click="setTender(Math.ceil(cartStore.totalDue / 10) * 10 || 10)"
-            class="h-10 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            class="h-10 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition"
           >
             Round $10
           </button>
           <button
             type="button"
             @click="setTender(20)"
-            class="h-10 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            class="h-10 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition"
           >
             $20
           </button>
           <button
             type="button"
             @click="setTender(50)"
-            class="h-10 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            class="h-10 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition"
           >
             $50
           </button>
           <button
             type="button"
             @click="setTender(100)"
-            class="h-10 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            class="h-10 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition"
           >
             $100
           </button>
         </div>
 
         <!-- Change Due Highlight -->
-        <div class="mt-2 p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-300">Change Due to Customer</span>
+        <div class="mt-2 p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-500">Change Due to Customer</span>
           <span
             class="text-xl font-black font-mono"
-            :class="cashTendered >= cartStore.totalDue ? 'text-cyan-400' : 'text-rose-400'"
+            :class="cashTendered >= cartStore.totalDue ? 'text-teal-600' : 'text-rose-500'"
           >
             ${{ changeDue.toFixed(2) }}
           </span>
@@ -201,12 +203,12 @@ async function handleCompletePayment() {
       </div>
 
       <!-- Card / QR Instructions -->
-      <div v-else class="p-6 bg-slate-950/70 border border-slate-800 rounded-2xl text-center flex flex-col items-center gap-2">
-        <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+      <div v-else class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center flex flex-col items-center gap-2">
+        <div class="w-12 h-12 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center">
           <CheckCircle2 class="w-6 h-6" />
         </div>
-        <h4 class="text-sm font-bold text-white">Ready for {{ selectedMethod === 'CARD' ? 'Card Swipe / Tap' : 'QR Scan' }}</h4>
-        <p class="text-xs text-slate-400 max-w-xs">
+        <h4 class="text-sm font-bold text-slate-800">Ready for {{ selectedMethod === 'CARD' ? 'Card Swipe / Tap' : 'QR Scan' }}</h4>
+        <p class="text-xs text-slate-500 max-w-xs">
           Terminal is listening. Tap "Complete Transaction" once authorized on the physical EFTPOS / QR terminal.
         </p>
       </div>
@@ -217,7 +219,7 @@ async function handleCompletePayment() {
         type="button"
         @click="emit('close')"
         :disabled="isProcessing"
-        class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition disabled:opacity-50"
+        class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 transition disabled:opacity-50"
       >
         Cancel
       </button>

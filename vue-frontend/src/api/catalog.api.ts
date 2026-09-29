@@ -17,6 +17,20 @@ export interface BarcodeResponse {
   product: Product;
 }
 
+export interface CreateProductPayload {
+  name: string;
+  category_id: string;
+  subcategory_id?: string | null;
+  price: number;
+  cost?: number;
+  sku?: string;
+  barcode?: string;
+  description?: string;
+  stock_quantity?: number;
+  tax_rate?: number;
+  image_path?: string;
+}
+
 export interface SingleProductResponse {
   success: boolean;
   message?: string;
@@ -53,7 +67,7 @@ export const catalogApi = {
     });
   },
 
-  createProduct(data: FormData | Record<string, any>) {
+  createProduct(data: CreateProductPayload | FormData | Record<string, any>) {
     const isFormData = data instanceof FormData;
     return apiClient.post<SingleProductResponse>('/catalog/products', data, {
       headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
@@ -65,6 +79,13 @@ export const catalogApi = {
     return apiClient.post<SingleProductResponse>(`/catalog/products/${id}`, data, {
       headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
     });
+  },
+
+  updateStock(productId: string, stock_quantity: number) {
+    return apiClient.patch<{ success: boolean; message: string; product: Product }>(
+      `/catalog/products/${productId}/stock`,
+      { stock_quantity }
+    );
   },
 
   deleteProduct(id: string) {

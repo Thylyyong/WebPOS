@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth.store';
 import { settingsApi } from '../api/settings.api';
 import { roleApi } from '../api/role.api';
 import { useCatalogStore } from '../stores/catalog.store';
 import { useUiStore } from '../stores/ui.store';
-import AppHeader from '../components/common/AppHeader.vue';
+import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import ProductModal from '../components/pos/ProductModal.vue';
 import { 
   Settings, 
@@ -22,10 +24,16 @@ import {
   X, 
   KeyRound, 
   Search, 
-  Image as ImageIcon 
+  Image as ImageIcon,
+  QrCode,
+  Upload,
+  Info,
+  LogOut
 } from 'lucide-vue-next';
 import type { StoreSettings, RoleDefinition, StaffAccount, Product } from '../types/pos.types';
 
+const router = useRouter();
+const authStore = useAuthStore();
 const uiStore = useUiStore();
 const catalogStore = useCatalogStore();
 
@@ -42,7 +50,9 @@ const settings = ref<StoreSettings>({
   currency_symbol: '$',
   default_tax_rate: '10',
   receipt_header: 'Welcome to OmniPOS Bistro!',
-  receipt_footer: 'Thank you for dining with us! Please come again.'
+  receipt_footer: 'Thank you for dining with us! Please come again.',
+  qr_code_image: '',
+  khqr_payload: ''
 });
 const isSaving = ref(false);
 
@@ -285,13 +295,50 @@ async function handleDeleteProduct(prod: Product) {
     uiStore.showToast(err.message || 'Failed to delete product', 'error');
   }
 }
+
+function onQrFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  if (file.size > 800 * 1024) {
+    uiStore.showToast('Please choose an image under 800KB (stored as text in the settings table).', 'warning');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => { settings.value.qr_code_image = reader.result as string; };
+  reader.readAsDataURL(file);
+}
+
+function handleLogout() {
+  authStore.logout();
+  router.push('/login');
+}
+
+function pinChangeNotSupported() {
+  uiStore.showToast('Changing the Boss PIN needs a backend auth endpoint that does not exist yet.', 'warning');
+}
+
+function resetDbNotSupported() {
+  uiStore.showToast('Resetting the database needs a dedicated backend endpoint — not implemented, to avoid touching the backend.', 'warning');
+}
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col bg-[#090D16] overflow-hidden select-none">
-    <AppHeader />
+  <AppSidebarShell>
+    <template #title>Settings</template>
+    <template #subtitle>Store profile, taxes, receipts, and payment details</template>
+    <template #actions>
+      <button
+        type="button"
+        @click="saveSettings"
+        :disabled="isSaving"
+        class="h-8 px-3 rounded-lg bg-teal-600 text-white flex items-center gap-1.5 text-xs font-semibold hover:bg-teal-700 disabled:opacity-50"
+      >
+        <Save class="w-3.5 h-3.5" />
+        <span>{{ isSaving ? 'Saving...' : 'Save Settings' }}</span>
+      </button>
+    </template>
 
-    <main class="flex-1 p-4 sm:p-6 overflow-y-auto max-w-6xl mx-auto w-full flex flex-col gap-6">
+    <div class="max-w-6xl mx-auto w-full flex flex-col gap-6">
       <!-- Title & Navigation Tabs Bar -->
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -457,6 +504,98 @@ async function handleDeleteProduct(prod: Product) {
                 />
               </div>
             </div>
+          </div>
+
+          <!-- Payment QR -->
+          <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3.5">
+            <div class="flex items-center gap-2 text-sm font-bold text-white pb-2 border-b border-slate-800">
+              <QrCode class="w-4 h-4 text-emerald-400" />
+              <span>Static Payment QR Code (KHQR / PromptPay)</span>
+            </div>
+            <p class="text-[11px] text-slate-400 -mt-1">
+              Upload your static merchant QR code (ABA KHQR, PromptPay, Wing) for customer checkout scans.
+            </p>
+
+            <div class="flex items-center gap-3">
+              <div class="w-20 h-20 rounded-xl border border-dashed border-slate-700 bg-slate-950 flex items-center justify-center overflow-hidden shrink-0">
+                <img v-if="settings.qr_code_image" :src="settings.qr_code_image" class="w-full h-full object-contain" />
+                <QrCode v-else class="w-6 h-6 text-slate-700" />
+              </div>
+              <label class="flex-1 h-10 px-3 rounded-xl border border-slate-800 bg-slate-950 text-xs text-slate-300 flex items-center gap-2 cursor-pointer hover:border-emerald-500/50">
+                <Upload class="w-3.5 h-3.5" />
+                <span>Upload QR Code Image</span>
+                <input type="file" accept="image/*" class="hidden" @change="onQrFileChange" />
+              </label>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-slate-400">Bank Payment QR Payload / KHQR String (Optional)</label>
+              <input
+                v-model="settings.khqr_payload"
+                type="text"
+                placeholder="Encoded onto printed receipts when static QR image is unset"
+                class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          <!-- Employee Security -->
+          <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3.5">
+            <div class="flex items-center gap-2 text-sm font-bold text-white pb-2 border-b border-slate-800">
+              <ShieldCheck class="w-4 h-4 text-emerald-400" />
+              <span>Employee Security & Change PIN</span>
+            </div>
+            <p class="text-[11px] text-slate-400 -mt-1">
+              Change master security PIN for Owner (Boss). Staff Cashier does not require a PIN for fast frontline access.
+            </p>
+
+            <div class="flex items-start gap-2 p-2.5 rounded-xl bg-sky-950/40 border border-sky-900/50 text-[10.5px] text-sky-300">
+              <Info class="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>PIN changes aren't wired up — the auth API only exposes login, /me, logout and switch-branch, with no PIN-update route.</span>
+            </div>
+
+            <div class="flex items-center gap-2 mt-auto">
+              <button
+                type="button"
+                @click="pinChangeNotSupported"
+                class="flex-1 h-10 rounded-xl border border-slate-800 text-slate-500 text-xs font-bold flex items-center justify-center gap-2 cursor-not-allowed"
+              >
+                <ShieldCheck class="w-3.5 h-3.5" />
+                Change Boss PIN
+              </button>
+              <button
+                type="button"
+                @click="handleLogout"
+                class="flex-1 h-10 rounded-xl glow-btn-primary text-xs font-bold flex items-center justify-center gap-2"
+              >
+                <LogOut class="w-3.5 h-3.5" />
+                Switch Role / Logout
+              </button>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="md:col-span-2 p-5 rounded-2xl bg-rose-950/20 border border-rose-900/40 flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-sm font-bold text-rose-300">
+              <Trash2 class="w-4 h-4" />
+              <span>Reset Database (Fresh Client Setup)</span>
+            </div>
+            <p class="text-[11px] text-rose-300/70">
+              Permanently clears all sales transactions, order history, custom categories, products, register
+              sessions, and restores initial factory defaults. Use this before selling or deploying to a new client.
+            </p>
+            <p class="text-[10.5px] text-slate-400">
+              Disabled: there is no reset/wipe route in <code class="font-mono">routes/api.php</code>, and adding one
+              would mean modifying the backend, which is outside the scope of this frontend-only change.
+            </p>
+            <button
+              type="button"
+              @click="resetDbNotSupported"
+              class="self-start h-10 px-4 rounded-xl bg-rose-950/60 border border-rose-800/60 text-rose-300 text-xs font-bold flex items-center gap-2 cursor-not-allowed"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              Reset Database
+            </button>
           </div>
         </div>
       </div>
@@ -760,7 +899,7 @@ async function handleDeleteProduct(prod: Product) {
           </table>
         </div>
       </div>
-    </main>
+    </div>
 
     <!-- Create Role Modal -->
     <div
@@ -942,5 +1081,5 @@ async function handleDeleteProduct(prod: Product) {
       :product="selectedProduct"
       @close="showProductModal = false"
     />
-  </div>
+  </AppSidebarShell>
 </template>

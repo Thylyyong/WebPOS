@@ -94,6 +94,32 @@ function handleLogout() {
       </RouterLink>
 
       <RouterLink
+        to="/history"
+        class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
+        :class="route.path === '/history' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
+      >
+        <span>History</span>
+      </RouterLink>
+
+      <RouterLink
+        v-if="authStore.isBoss"
+        to="/menu/products"
+        class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
+        :class="route.path.startsWith('/menu') ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
+      >
+        <span>Menu</span>
+      </RouterLink>
+
+      <RouterLink
+        v-if="authStore.isBoss"
+        to="/analytics"
+        class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
+        :class="route.path === '/analytics' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'"
+      >
+        <span>Analytics</span>
+      </RouterLink>
+
+      <RouterLink
         v-if="authStore.isBoss"
         to="/accounting"
         class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
