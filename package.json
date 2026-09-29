@@ -1,0 +1,11 @@
+{
+  "name": "pos-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix vue-frontend run dev",
+    "build": "npm --prefix vue-frontend run build",
+    "dev:vue": "npm --prefix vue-frontend run dev",
+    "build:vue": "npm --prefix vue-frontend run build"
+  }
+}
