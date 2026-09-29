@@ -5,18 +5,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { useUiStore } from '../stores/ui.store';
 import { authApi } from '../api/auth.api';
 import PinPad from '../components/common/PinPad.vue';
-import { 
-  Store, 
-  ShieldCheck, 
-  UserCheck, 
-  Sparkles, 
-  KeyRound, 
-  ChefHat, 
-  Coffee, 
-  Users, 
-  Shield,
-  LayoutGrid
-} from 'lucide-vue-next';
+import { ShieldCheck, UserCheck, Sparkles, KeyRound, LayoutGrid } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -30,58 +19,16 @@ const availableRoles = ref<any[]>([]);
 onMounted(async () => {
   try {
     const res = await authApi.getRoles();
-    if (res.data.success && res.data.roles && res.data.roles.length > 0) {
+    if (res.data.success && res.data.roles) {
       availableRoles.value = res.data.roles;
-      // Default to cashier or first user
-      const defaultUser = res.data.roles.find((r: any) => r.username === 'cashier') || res.data.roles[0];
-      if (defaultUser) {
-        selectedUsername.value = defaultUser.username;
-      }
     }
   } catch (_) {
     availableRoles.value = [
-      { id: 17, name: 'Cashier', username: 'cashier', role: 'CASHIER', role_name: 'Cashier' },
-      { id: 16, name: 'Boss', username: 'boss', role: 'BOSS', role_name: 'Boss / Owner' }
+      { id: 16, name: 'Boss', username: 'boss', role: 'BOSS' },
+      { id: 17, name: 'Cashier', username: 'cashier', role: 'CASHIER' }
     ];
   }
 });
-
-function getRoleIcon(role: string) {
-  const r = (role || '').toUpperCase();
-  if (r.includes('BOSS') || r.includes('ADMIN') || r.includes('OWNER')) return ShieldCheck;
-  if (r.includes('CHEF') || r.includes('KITCHEN')) return ChefHat;
-  if (r.includes('BARISTA') || r.includes('COFFEE')) return Coffee;
-  if (r.includes('WAITER')) return Users;
-  return UserCheck;
-}
-
-function getRoleBadgeClass(role: string) {
-  const r = (role || '').toUpperCase();
-  if (r.includes('BOSS') || r.includes('ADMIN')) {
-    return 'bg-amber-950/50 text-amber-300 border-amber-500/30';
-  }
-  if (r.includes('MANAGER')) {
-    return 'bg-indigo-950/50 text-indigo-300 border-indigo-500/30';
-  }
-  if (r.includes('CHEF')) {
-    return 'bg-rose-950/50 text-rose-300 border-rose-500/30';
-  }
-  return 'bg-emerald-950/50 text-emerald-300 border-emerald-500/30';
-}
-
-function getCardActiveStyle(role: string) {
-  const r = (role || '').toUpperCase();
-  if (r.includes('BOSS') || r.includes('ADMIN')) {
-    return 'bg-amber-950/40 border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)]';
-  }
-  if (r.includes('MANAGER')) {
-    return 'bg-indigo-950/40 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.2)]';
-  }
-  if (r.includes('CHEF')) {
-    return 'bg-rose-950/40 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.2)]';
-  }
-  return 'bg-emerald-950/40 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]';
-}
 
 async function handlePinSubmit(code: string) {
   if (isSubmitting.value) return;
@@ -114,12 +61,8 @@ function instantCashierLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-[#090D16] flex flex-col items-center justify-center p-4 relative overflow-hidden select-none">
-    <!-- Ambient Glow Backgrounds -->
-    <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none" />
-    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-teal-600/15 rounded-full blur-3xl pointer-events-none" />
-
-    <div class="w-full max-w-lg flex flex-col items-center relative z-10">
+  <div class="min-h-screen w-full bg-[#F5F7FA] flex flex-col items-center justify-center p-4 select-none">
+    <div class="w-full max-w-md flex flex-col items-center">
       <!-- Brand Header -->
       <div class="flex flex-col items-center text-center mb-6">
         <div class="w-14 h-14 rounded-2xl bg-teal-600 flex items-center justify-center text-white shadow-lg mb-3">
@@ -132,50 +75,35 @@ function instantCashierLogin() {
         </span>
       </div>
 
-      <!-- Dynamic Role & Staff Selector Cards Grid -->
-      <div class="w-full mb-6">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Select Profile</span>
-          <span class="text-[11px] text-slate-500">{{ availableRoles.length }} active profiles</span>
-        </div>
+      <!-- Sign-in Card -->
+      <div class="w-full bg-white border border-slate-200 rounded-3xl shadow-sm p-6 flex flex-col items-center">
+        <p class="text-[11px] font-bold text-slate-400 tracking-wider mb-4 self-start">SIGN IN TO OMNI POS</p>
+        <p class="text-[10px] font-bold text-slate-400 tracking-wider mb-2 self-start">SELECT ROLE TO SIGN IN</p>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto pr-1">
+        <div class="grid grid-cols-2 gap-3 w-full mb-4">
           <button
-            v-for="profile in availableRoles"
-            :key="profile.id"
             type="button"
-            @click="selectedUsername = profile.username; pin = ''"
-            class="p-3 rounded-2xl border flex flex-col items-center text-center transition-all duration-200"
-            :class="selectedUsername === profile.username
-              ? getCardActiveStyle(profile.role)
-              : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:border-slate-700'"
+            @click="selectedUsername = 'cashier'; pin = ''"
+            class="p-4 rounded-2xl border flex flex-col items-center text-center transition-all duration-200"
+            :class="selectedUsername === 'cashier'
+              ? 'bg-teal-600 border-teal-600 text-white shadow-md'
+              : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
           >
-            <div
-              class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center mb-1.5 transition"
-              :class="selectedUsername === profile.username ? 'text-white bg-slate-700' : 'text-slate-400'"
-            >
-              <component :is="getRoleIcon(profile.role)" class="w-4 h-4" />
-            </div>
-
-            <span class="text-xs font-bold text-white truncate max-w-full">
-              {{ profile.name }}
-            </span>
-
-            <span
-              class="mt-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border truncate max-w-full"
-              :class="getRoleBadgeClass(profile.role)"
-            >
-              {{ profile.role_name || profile.role }}
-            </span>
+            <UserCheck class="w-6 h-6 mb-1.5" />
+            <span class="text-[12.5px] font-bold">Staff Cashier</span>
           </button>
-        </div>
-      </div>
 
-      <!-- Touch Keypad Card -->
-      <div class="w-full bg-slate-900/90 border border-slate-800 p-6 rounded-3xl shadow-2xl backdrop-blur-xl flex flex-col items-center">
-        <div class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
-          <KeyRound class="w-3.5 h-3.5 text-emerald-400" />
-          <span>Enter PIN for: <strong class="text-white capitalize font-mono">{{ selectedUsername }}</strong></span>
+          <button
+            type="button"
+            @click="selectedUsername = 'boss'; pin = ''"
+            class="p-4 rounded-2xl border flex flex-col items-center text-center transition-all duration-200"
+            :class="selectedUsername === 'boss'
+              ? 'bg-violet-600 border-violet-600 text-white shadow-md'
+              : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
+          >
+            <ShieldCheck class="w-6 h-6 mb-1.5" />
+            <span class="text-[12.5px] font-bold">Boss (Owner)</span>
+          </button>
         </div>
 
         <p class="text-[11px] text-slate-400 mb-4">
@@ -194,35 +122,19 @@ function instantCashierLogin() {
           Login as Staff Cashier
         </button>
 
-        <!-- Other roles: PIN required -->
+        <!-- Boss: PIN required -->
         <div v-else class="w-full flex flex-col items-center">
+          <div class="text-[11px] font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+            <KeyRound class="w-3.5 h-3.5 text-violet-500" />
+            <span>Enter Boss PIN</span>
+          </div>
           <PinPad
             v-model="pin"
+            light
             :disabled="isSubmitting"
             submit-label="SIGN IN"
             @submit="handlePinSubmit"
           />
-        </div>
-
-        <!-- One-Click Demo Shortcut Buttons -->
-        <div class="mt-5 pt-4 border-t border-slate-800 w-full flex items-center justify-between text-xs gap-2">
-          <button
-            type="button"
-            @click="quickLogin('cashier', '1234')"
-            class="flex-1 py-2 px-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold flex items-center justify-center gap-1.5 transition"
-          >
-            <Sparkles class="w-3.5 h-3.5 text-emerald-400" />
-            <span>Auto Cashier (1234)</span>
-          </button>
-
-          <button
-            type="button"
-            @click="quickLogin('boss', '9999')"
-            class="flex-1 py-2 px-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold flex items-center justify-center gap-1.5 transition"
-          >
-            <Sparkles class="w-3.5 h-3.5 text-amber-400" />
-            <span>Auto Boss (9999)</span>
-          </button>
         </div>
       </div>
 
