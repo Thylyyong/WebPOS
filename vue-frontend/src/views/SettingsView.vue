@@ -5,7 +5,19 @@ import { useUiStore } from '../stores/ui.store';
 import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import { useAuthStore } from '../stores/auth.store';
 import { useRouter } from 'vue-router';
-import { Save, Store, Receipt, Sliders, QrCode, ShieldCheck, LogOut, Trash2, Upload, Info } from 'lucide-vue-next';
+import {
+  Save,
+  Store,
+  Receipt,
+  Sliders,
+  QrCode,
+  ShieldCheck,
+  LogOut,
+  Trash2,
+  Upload,
+  RefreshCw,
+  X,
+} from 'lucide-vue-next';
 import type { StoreSettings } from '../types/pos.types';
 
 const uiStore = useUiStore();
@@ -22,36 +34,63 @@ const settings = ref<StoreSettings>({
   receipt_header: 'Welcome to OmniPOS Bistro!',
   receipt_footer: 'Thank you for dining with us! Please come again.',
   qr_code_image: '',
-  khqr_payload: ''
+  khqr_payload: '',
 });
 
 const isSaving = ref(false);
+const isUploadingQr = ref(false);
+const qrFileInput = ref<HTMLInputElement | null>(null);
 
-function onQrFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
+function resolveQrImageUrl(pathOrUrl?: string | null): string {
+  if (!pathOrUrl) return '';
+  if (
+    pathOrUrl.startsWith('http://') ||
+    pathOrUrl.startsWith('https://') ||
+    pathOrUrl.startsWith('data:')
+  ) {
+    return pathOrUrl;
+  }
+  return pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+}
+
+async function onQrFileChange(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
   if (!file) return;
-  if (file.size > 800 * 1024) {
-    uiStore.showToast('Please choose an image under 800KB (stored as text in the settings table).', 'warning');
+
+  if (!file.type.startsWith('image/')) {
+    uiStore.showToast('Please select an image file (PNG, JPG, WEBP, SVG)', 'warning');
+    input.value = '';
     return;
   }
-  const reader = new FileReader();
-  reader.onload = () => { settings.value.qr_code_image = reader.result as string; };
-  reader.readAsDataURL(file);
+  if (file.size > 5 * 1024 * 1024) {
+    uiStore.showToast('QR image must be under 5MB', 'warning');
+    input.value = '';
+    return;
+  }
+
+  isUploadingQr.value = true;
+  try {
+    const res = await settingsApi.uploadQrImage(file);
+    if (res.data.success) {
+      settings.value.qr_code_image = res.data.qr_code_url || res.data.qr_code_image;
+      uiStore.showToast('Payment QR code image uploaded successfully!', 'success');
+    }
+  } catch (err: any) {
+    uiStore.showToast(err?.response?.data?.message || 'Failed to upload QR image', 'error');
+  } finally {
+    isUploadingQr.value = false;
+    input.value = '';
+  }
+}
+
+function removeQrImage() {
+  settings.value.qr_code_image = '';
 }
 
 function handleLogout() {
   authStore.logout();
   router.push('/login');
-}
-
-// Neither of these has a backend route: AuthController has no PIN-update
-// endpoint, and there is no "wipe transactional data" endpoint anywhere in
-// routes/api.php. Left disabled rather than faked.
-function pinChangeNotSupported() {
-  uiStore.showToast('Changing the Boss PIN needs a backend auth endpoint that does not exist yet.', 'warning');
-}
-function resetDbNotSupported() {
-  uiStore.showToast('Resetting the database needs a dedicated backend endpoint — not implemented, to avoid touching the backend.', 'warning');
 }
 
 onMounted(async () => {
@@ -78,217 +117,229 @@ async function saveSettings() {
 
 <template>
   <AppSidebarShell>
-    <template #title>Settings</template>
-    <template #subtitle>Store profile, taxes, receipts, and payment details</template>
+    <template #title>Settings &amp; Store Profile</template>
+    <template #subtitle>Configure business details, taxes, receipts, and payment QR codes</template>
     <template #actions>
       <button
         type="button"
         @click="saveSettings"
         :disabled="isSaving"
-        class="h-8 px-3 rounded-lg bg-teal-600 text-white flex items-center gap-1.5 text-xs font-semibold hover:bg-teal-700 disabled:opacity-50"
+        class="h-9 px-4 rounded-lg bg-teal-600 text-white flex items-center gap-1.5 text-xs font-semibold hover:bg-teal-700 shadow-sm transition disabled:opacity-50"
       >
-        <Save class="w-3.5 h-3.5" />
+        <RefreshCw v-if="isSaving" class="w-3.5 h-3.5 animate-spin" />
+        <Save v-else class="w-3.5 h-3.5" />
         <span>{{ isSaving ? 'Saving...' : 'Save Settings' }}</span>
       </button>
     </template>
 
-    <div class="max-w-4xl mx-auto w-full flex flex-col gap-6">
-
-      <!-- Settings Cards Form -->
+    <div class="max-w-4xl mx-auto w-full flex flex-col gap-5">
+      <!-- Settings Cards Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <!-- Store Information -->
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-white pb-2 border-b border-slate-800">
-            <Store class="w-4 h-4 text-emerald-400" />
+        <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
+          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
+            <Store class="w-4 h-4 text-teal-600" />
             <span>Store Profile</span>
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-slate-400">Store Name</label>
+            <label class="text-xs font-semibold text-slate-600">Store Name</label>
             <input
               v-model="settings.store_name"
               type="text"
-              class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-slate-400">Store Address</label>
+            <label class="text-xs font-semibold text-slate-600">Store Address</label>
             <input
               v-model="settings.store_address"
               type="text"
-              class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-slate-400">Phone Number</label>
+            <label class="text-xs font-semibold text-slate-600">Phone Number</label>
             <input
               v-model="settings.store_phone"
               type="text"
-              class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-slate-400">Email Address</label>
+            <label class="text-xs font-semibold text-slate-600">Email Address</label>
             <input
               v-model="settings.store_email"
               type="email"
-              class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+              class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
         </div>
 
         <!-- Tax & Currency Configuration -->
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-white pb-2 border-b border-slate-800">
-            <Sliders class="w-4 h-4 text-cyan-400" />
-            <span>Taxes & Currency</span>
+        <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
+          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
+            <Sliders class="w-4 h-4 text-teal-600" />
+            <span>Taxes &amp; Currency</span>
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-slate-400">Currency Symbol</label>
+            <label class="text-xs font-semibold text-slate-600">Currency Symbol</label>
             <input
               v-model="settings.currency_symbol"
               type="text"
-              class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+              class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-slate-400">Default Sales Tax Rate (%)</label>
+            <label class="text-xs font-semibold text-slate-600">Default Sales Tax Rate (%)</label>
             <input
               v-model="settings.default_tax_rate"
               type="number"
               step="0.1"
-              class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+              class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
 
-          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-400">
-            Tax is calculated automatically on order checkout: <strong class="text-slate-300">Subtotal × (Tax Rate / 100)</strong>.
+          <div class="p-3 bg-teal-50/60 rounded-xl border border-teal-100 text-[11.5px] text-teal-800">
+            Tax is calculated automatically on order checkout:
+            <strong class="font-bold text-teal-900">Subtotal × (Tax Rate / 100)</strong>.
+          </div>
+        </div>
+
+        <!-- Payment QR Configuration -->
+        <div class="md:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
+          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
+            <QrCode class="w-4 h-4 text-teal-600" />
+            <span>Customer Payment QR Code (ABA KHQR / PromptPay / Mobile Banking)</span>
+          </div>
+          <p class="text-[12px] text-slate-500 -mt-1">
+            Upload your merchant payment QR code image. This QR code is displayed to customers directly on the POS screen during QR checkout.
+          </p>
+
+          <input
+            ref="qrFileInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="onQrFileChange"
+          />
+
+          <div class="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div
+              class="w-32 h-32 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative"
+            >
+              <img
+                v-if="settings.qr_code_image"
+                :src="resolveQrImageUrl(settings.qr_code_image)"
+                alt="Payment QR"
+                class="w-full h-full object-contain p-1"
+              />
+              <QrCode v-else class="w-10 h-10 text-slate-300" />
+              <div
+                v-if="isUploadingQr"
+                class="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center"
+              >
+                <RefreshCw class="w-5 h-5 text-teal-600 animate-spin" />
+              </div>
+            </div>
+
+            <div class="flex-1 flex flex-col gap-2 text-center sm:text-left">
+              <div>
+                <h4 class="text-[13px] font-bold text-slate-800">
+                  {{ settings.qr_code_image ? 'Store Payment QR Configured' : 'No Payment QR Configured' }}
+                </h4>
+                <p class="text-[11.5px] text-slate-400 mt-0.5">
+                  Supports PNG, JPG, WEBP, or SVG images (Max 5MB).
+                </p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 mt-1 justify-center sm:justify-start">
+                <button
+                  type="button"
+                  @click="qrFileInput?.click()"
+                  :disabled="isUploadingQr"
+                  class="px-3.5 py-2 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 shadow-sm transition flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <RefreshCw v-if="isUploadingQr" class="w-3.5 h-3.5 animate-spin" />
+                  <Upload v-else class="w-3.5 h-3.5" />
+                  <span>{{ settings.qr_code_image ? 'Change QR Image' : 'Upload QR Image' }}</span>
+                </button>
+                <button
+                  v-if="settings.qr_code_image"
+                  type="button"
+                  @click="removeQrImage"
+                  class="px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition flex items-center gap-1"
+                >
+                  <X class="w-3.5 h-3.5" />
+                  <span>Remove QR</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold text-slate-600">Static Bank / KHQR Payload String (Optional)</label>
+            <input
+              v-model="settings.khqr_payload"
+              type="text"
+              placeholder="e.g. 00020101021229370016A000000727040122..."
+              class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-teal-500 focus:bg-white"
+            />
           </div>
         </div>
 
         <!-- Receipt Customization (Full width) -->
-        <div class="md:col-span-2 p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-white pb-2 border-b border-slate-800">
-            <Receipt class="w-4 h-4 text-amber-400" />
+        <div class="md:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
+          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
+            <Receipt class="w-4 h-4 text-teal-600" />
             <span>Thermal Receipt Template Format</span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold text-slate-400">Receipt Header Banner</label>
+              <label class="text-xs font-semibold text-slate-600">Receipt Header Banner</label>
               <textarea
                 v-model="settings.receipt_header"
                 rows="3"
-                class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white"
               />
             </div>
 
             <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold text-slate-400">Receipt Footer Thank You Message</label>
+              <label class="text-xs font-semibold text-slate-600">Receipt Footer Thank You Message</label>
               <textarea
                 v-model="settings.receipt_footer"
                 rows="3"
-                class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white"
               />
             </div>
           </div>
         </div>
 
-        <!-- Payment QR -->
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-white pb-2 border-b border-slate-800">
-            <QrCode class="w-4 h-4 text-emerald-400" />
-            <span>Static Payment QR Code (KHQR / PromptPay)</span>
-          </div>
-          <p class="text-[11px] text-slate-400 -mt-1">
-            Upload your static merchant QR code (ABA KHQR, PromptPay, Wing) for customer checkout scans.
-          </p>
-
-          <div class="flex items-center gap-3">
-            <div class="w-20 h-20 rounded-xl border border-dashed border-slate-700 bg-slate-950 flex items-center justify-center overflow-hidden shrink-0">
-              <img v-if="settings.qr_code_image" :src="settings.qr_code_image" class="w-full h-full object-contain" />
-              <QrCode v-else class="w-6 h-6 text-slate-700" />
+        <!-- Account & Session -->
+        <div class="md:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <ShieldCheck class="w-4 h-4 text-teal-600" />
+              <span>Current Account &amp; Access</span>
             </div>
-            <label class="flex-1 h-10 px-3 rounded-xl border border-slate-800 bg-slate-950 text-xs text-slate-300 flex items-center gap-2 cursor-pointer hover:border-emerald-500/50">
-              <Upload class="w-3.5 h-3.5" />
-              <span>Upload QR Code Image</span>
-              <input type="file" accept="image/*" class="hidden" @change="onQrFileChange" />
-            </label>
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-semibold text-slate-400">Bank Payment QR Payload / KHQR String (Optional)</label>
-            <input
-              v-model="settings.khqr_payload"
-              type="text"
-              placeholder="Encoded onto printed receipts when static QR image is unset"
-              class="h-10 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        </div>
-
-        <!-- Employee Security -->
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-white pb-2 border-b border-slate-800">
-            <ShieldCheck class="w-4 h-4 text-emerald-400" />
-            <span>Employee Security & Change PIN</span>
-          </div>
-          <p class="text-[11px] text-slate-400 -mt-1">
-            Change master security PIN for Owner (Boss). Staff Cashier does not require a PIN for fast frontline access.
-          </p>
-
-          <div class="flex items-start gap-2 p-2.5 rounded-xl bg-sky-950/40 border border-sky-900/50 text-[10.5px] text-sky-300">
-            <Info class="w-3.5 h-3.5 mt-0.5 shrink-0" />
-            <span>PIN changes aren't wired up — the auth API only exposes login, /me, logout and switch-branch, with no PIN-update route.</span>
-          </div>
-
-          <div class="flex items-center gap-2 mt-auto">
-            <button
-              type="button"
-              @click="pinChangeNotSupported"
-              class="flex-1 h-10 rounded-xl border border-slate-800 text-slate-500 text-xs font-bold flex items-center justify-center gap-2 cursor-not-allowed"
-            >
-              <ShieldCheck class="w-3.5 h-3.5" />
-              Change Boss PIN
-            </button>
             <button
               type="button"
               @click="handleLogout"
-              class="flex-1 h-10 rounded-xl glow-btn-primary text-xs font-bold flex items-center justify-center gap-2"
+              class="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-xs font-semibold transition flex items-center gap-1.5"
             >
               <LogOut class="w-3.5 h-3.5" />
-              Switch Role / Logout
+              <span>Switch Role / Logout</span>
             </button>
           </div>
-        </div>
-
-        <!-- Danger Zone -->
-        <div class="md:col-span-2 p-5 rounded-2xl bg-rose-950/20 border border-rose-900/40 flex flex-col gap-3">
-          <div class="flex items-center gap-2 text-sm font-bold text-rose-300">
-            <Trash2 class="w-4 h-4" />
-            <span>Reset Database (Fresh Client Setup)</span>
-          </div>
-          <p class="text-[11px] text-rose-300/70">
-            Permanently clears all sales transactions, order history, custom categories, products, register
-            sessions, and restores initial factory defaults. Use this before selling or deploying to a new client.
+          <p class="text-xs text-slate-500">
+            Logged in as <strong class="font-bold text-slate-800">{{ authStore.user?.name }}</strong> ({{ authStore.user?.role_name || authStore.user?.role }}). Store branch: <strong class="font-bold text-slate-800">{{ authStore.activeBranch?.name }}</strong>.
           </p>
-          <p class="text-[10.5px] text-slate-400">
-            Disabled: there is no reset/wipe route in <code class="font-mono">routes/api.php</code>, and adding one
-            would mean modifying the backend, which is outside the scope of this frontend-only change.
-          </p>
-          <button
-            type="button"
-            @click="resetDbNotSupported"
-            class="self-start h-10 px-4 rounded-xl bg-rose-950/60 border border-rose-800/60 text-rose-300 text-xs font-bold flex items-center gap-2 cursor-not-allowed"
-          >
-            <Trash2 class="w-3.5 h-3.5" />
-            Reset Database
-          </button>
         </div>
       </div>
     </div>

@@ -12,5 +12,15 @@ export const settingsApi = {
 
   getBranches() {
     return apiClient.get<{ success: boolean; branches: Branch[] }>('/branches');
+  },
+
+  uploadQrImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    return apiClient.post<{ success: boolean; message: string; qr_code_image: string; qr_code_url: string }>('/settings/upload-qr', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   }
 };

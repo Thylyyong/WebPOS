@@ -116,6 +116,16 @@ class CatalogController extends Controller
      */
     public function storeProduct(Request $request)
     {
+        if ($request->has('subcategory_id') && ($request->subcategory_id === '' || $request->subcategory_id === 'null' || $request->subcategory_id === 'none')) {
+            $request->merge(['subcategory_id' => null]);
+        }
+        if ($request->has('sku') && trim($request->sku) === '') {
+            $request->merge(['sku' => null]);
+        }
+        if ($request->has('barcode') && trim($request->barcode) === '') {
+            $request->merge(['barcode' => null]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|string|exists:categories,id',
@@ -178,6 +188,16 @@ class CatalogController extends Controller
     {
         $product = Product::findOrFail($id);
 
+        if ($request->has('subcategory_id') && ($request->subcategory_id === '' || $request->subcategory_id === 'null' || $request->subcategory_id === 'none')) {
+            $request->merge(['subcategory_id' => null]);
+        }
+        if ($request->has('sku') && trim($request->sku) === '') {
+            $request->merge(['sku' => null]);
+        }
+        if ($request->has('barcode') && trim($request->barcode) === '') {
+            $request->merge(['barcode' => null]);
+        }
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'category_id' => 'sometimes|required|string|exists:categories,id',
@@ -205,6 +225,8 @@ class CatalogController extends Controller
             $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
             $file->move($uploadDir, $filename);
             $validated['image_path'] = 'uploads/products/' . $filename;
+        } elseif ($request->boolean('remove_image')) {
+            $validated['image_path'] = null;
         }
 
         unset($validated['image']);
@@ -265,6 +287,118 @@ class CatalogController extends Controller
             'success' => true,
             'message' => "Stock updated for {$product->name}",
             'product' => $product,
+        ]);
+    }
+
+    /**
+     * Create category
+     */
+    public function storeCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'color_hex' => 'nullable|string|max:30',
+            'icon' => 'nullable|string|max:50',
+            'display_order' => 'nullable|integer',
+        ]);
+
+        $validated['id'] = 'cat_' . Str::random(8);
+        if (empty($validated['color_hex'])) {
+            $validated['color_hex'] = '#0D9488';
+        }
+        if (!isset($validated['display_order'])) {
+            $validated['display_order'] = Category::count();
+        }
+
+        $category = Category::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Category '{$category->name}' created successfully",
+            'category' => $category->load('subcategories'),
+        ], 201);
+    }
+
+    /**
+     * Update category
+     */
+    public function updateCategory(Request $request, string $id)
+    {
+        $category = Category::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'color_hex' => 'nullable|string|max:30',
+            'icon' => 'nullable|string|max:50',
+            'display_order' => 'nullable|integer',
+        ]);
+
+        $category->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Category '{$category->name}' updated successfully",
+            'category' => $category->fresh('subcategories'),
+        ]);
+    }
+
+    /**
+     * Delete category
+     */
+    public function destroyCategory(string $id)
+    {
+        $category = Category::findOrFail($id);
+
+        // Check if category has products
+        if ($category->products()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot delete category '{$category->name}' because it contains {$category->products()->count()} products. Please reassign or delete the products first.",
+            ], 422);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Category '{$category->name}' deleted successfully",
+        ]);
+    }
+
+    /**
+     * Add subcategory
+     */
+    public function storeSubcategory(Request $request, string $categoryId)
+    {
+        $category = Category::findOrFail($categoryId);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $validated['id'] = 'sub_' . Str::random(8);
+        $validated['category_id'] = $category->id;
+
+        $sub = Subcategory::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Subcategory '{$sub->name}' created successfully",
+            'subcategory' => $sub,
+        ], 201);
+    }
+
+    /**
+     * Delete subcategory
+     */
+    public function destroySubcategory(string $id)
+    {
+        $sub = Subcategory::findOrFail($id);
+        $sub->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Subcategory deleted successfully",
         ]);
     }
 }

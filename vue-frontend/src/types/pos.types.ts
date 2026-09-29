@@ -262,5 +262,6 @@ export interface StoreSettings {
   logo_path?: string;
   // Stored via the same generic Setting key/value store (POST /settings).
   qr_code_image?: string;
+  qr_code_url?: string;
   khqr_payload?: string;
 }

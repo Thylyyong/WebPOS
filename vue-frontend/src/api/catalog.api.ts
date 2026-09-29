@@ -90,5 +90,25 @@ export const catalogApi = {
 
   deleteProduct(id: string) {
     return apiClient.delete<{ success: boolean; message: string }>(`/catalog/products/${id}`);
+  },
+
+  createCategory(data: { name: string; color_hex?: string; icon?: string }) {
+    return apiClient.post<{ success: boolean; message: string; category: Category }>('/catalog/categories', data);
+  },
+
+  updateCategory(id: string, data: { name?: string; color_hex?: string; icon?: string }) {
+    return apiClient.put<{ success: boolean; message: string; category: Category }>(`/catalog/categories/${id}`, data);
+  },
+
+  deleteCategory(id: string) {
+    return apiClient.delete<{ success: boolean; message: string }>(`/catalog/categories/${id}`);
+  },
+
+  createSubcategory(categoryId: string, data: { name: string }) {
+    return apiClient.post<{ success: boolean; message: string; subcategory: any }>(`/catalog/categories/${categoryId}/subcategories`, data);
+  },
+
+  deleteSubcategory(id: string) {
+    return apiClient.delete<{ success: boolean; message: string }>(`/catalog/subcategories/${id}`);
   }
 };

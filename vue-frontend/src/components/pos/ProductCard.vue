@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { Product } from '../../types/pos.types';
 import { Plus, ImageIcon } from 'lucide-vue-next';
 
@@ -9,6 +10,20 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'add', product: Product): void;
 }>();
+
+const imageUrl = computed(() => {
+  const p = props.product;
+  if (p.image_url) return p.image_url;
+  if (!p.image_path) return null;
+  if (
+    p.image_path.startsWith('http://') ||
+    p.image_path.startsWith('https://') ||
+    p.image_path.startsWith('data:')
+  ) {
+    return p.image_path;
+  }
+  return p.image_path.startsWith('/') ? p.image_path : `/${p.image_path}`;
+});
 </script>
 
 <template>
@@ -16,9 +31,17 @@ const emit = defineEmits<{
     @click="emit('add', product)"
     class="group relative bg-white border border-slate-200 hover:border-teal-400 rounded-2xl p-3 flex flex-col cursor-pointer select-none transition-all duration-200 hover:shadow-md active:scale-95"
   >
-    <!-- Image placeholder -->
-    <div class="w-full aspect-square rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-2.5">
-      <ImageIcon class="w-7 h-7 text-slate-300" />
+    <!-- Image placeholder or uploaded product image -->
+    <div class="w-full aspect-square rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-2.5 overflow-hidden">
+      <img
+        v-if="imageUrl"
+        :src="imageUrl"
+        :alt="product.name"
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+        @error="($event.target as HTMLElement).style.display = 'none'"
+      />
+      <ImageIcon v-else class="w-7 h-7 text-slate-300" />
     </div>
 
     <h4 class="text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors line-clamp-2 leading-snug min-h-[2.4em]">

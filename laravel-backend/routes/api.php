@@ -50,6 +50,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/products/{id}', [CatalogController::class, 'updateProduct']); // support multipart update
             Route::delete('/products/{id}', [CatalogController::class, 'destroyProduct']);
             Route::patch('/products/{id}/stock', [CatalogController::class, 'updateStock']);
+
+            Route::post('/categories', [CatalogController::class, 'storeCategory']);
+            Route::put('/categories/{id}', [CatalogController::class, 'updateCategory']);
+            Route::delete('/categories/{id}', [CatalogController::class, 'destroyCategory']);
+            Route::post('/categories/{categoryId}/subcategories', [CatalogController::class, 'storeSubcategory']);
+            Route::delete('/subcategories/{id}', [CatalogController::class, 'destroySubcategory']);
         });
     });
 
@@ -108,8 +114,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/clear', [CustomerDisplayController::class, 'clearState']);
     });
 
-    Route::middleware('role:main_boss')->prefix('settings')->group(function () {
+    Route::prefix('settings')->group(function () {
         Route::get('/', [SettingController::class, 'index']);
-        Route::post('/', [SettingController::class, 'update']);
+        Route::post('/upload-qr', [SettingController::class, 'uploadQr']);
+        Route::middleware('role:main_boss,sub_boss')->group(function () {
+            Route::post('/', [SettingController::class, 'update']);
+        });
     });
 });

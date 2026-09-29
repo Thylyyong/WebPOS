@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useCartStore } from '../../stores/cart.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { useUiStore } from '../../stores/ui.store';
+import { settingsApi } from '../../api/settings.api';
 import AppModal from '../common/AppModal.vue';
-import { Banknote, CreditCard, QrCode, CheckCircle2, ArrowRight } from 'lucide-vue-next';
-import type { PaymentMethod } from '../../types/pos.types';
+import {
+  Banknote,
+  CreditCard,
+  QrCode,
+  ArrowRight,
+  Upload,
+  RefreshCw,
+} from 'lucide-vue-next';
+import type { PaymentMethod, StoreSettings } from '../../types/pos.types';
 
 const props = defineProps<{
   show: boolean;
@@ -24,12 +32,78 @@ const selectedMethod = ref<PaymentMethod>('CASH');
 const cashTendered = ref<number>(cartStore.totalDue);
 const isProcessing = ref(false);
 
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    selectedMethod.value = props.initialMethod || 'CASH';
-    cashTendered.value = cartStore.totalDue;
+const storeSettings = ref<StoreSettings | null>(null);
+const qrImageUrl = ref<string>('');
+const isUploadingQr = ref(false);
+const qrFileInput = ref<HTMLInputElement | null>(null);
+
+function resolveQrImageUrl(pathOrUrl?: string | null): string {
+  if (!pathOrUrl) return '';
+  if (
+    pathOrUrl.startsWith('http://') ||
+    pathOrUrl.startsWith('https://') ||
+    pathOrUrl.startsWith('data:')
+  ) {
+    return pathOrUrl;
   }
-});
+  return pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+}
+
+async function loadStoreQr() {
+  try {
+    const res = await settingsApi.getSettings();
+    if (res.data.success && res.data.settings) {
+      storeSettings.value = res.data.settings;
+      qrImageUrl.value = res.data.settings.qr_code_url || res.data.settings.qr_code_image || '';
+    }
+  } catch (err) {
+    console.error('Failed to load store settings:', err);
+  }
+}
+
+onMounted(loadStoreQr);
+
+watch(
+  () => props.show,
+  (newVal) => {
+    if (newVal) {
+      selectedMethod.value = props.initialMethod || 'CASH';
+      cashTendered.value = cartStore.totalDue;
+      loadStoreQr();
+    }
+  }
+);
+
+async function handleQrImageUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    uiStore.showToast('Please choose a valid image file (PNG, JPG, WEBP, SVG)', 'warning');
+    input.value = '';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    uiStore.showToast('QR image must be under 5MB', 'warning');
+    input.value = '';
+    return;
+  }
+
+  isUploadingQr.value = true;
+  try {
+    const res = await settingsApi.uploadQrImage(file);
+    if (res.data.success) {
+      qrImageUrl.value = res.data.qr_code_url || res.data.qr_code_image;
+      uiStore.showToast('Store payment QR image updated successfully!', 'success');
+    }
+  } catch (err: any) {
+    uiStore.showToast(err?.response?.data?.message || 'Failed to upload QR image', 'error');
+  } finally {
+    isUploadingQr.value = false;
+    input.value = '';
+  }
+}
 
 const changeDue = computed(() => {
   if (selectedMethod.value !== 'CASH') return 0;
@@ -59,7 +133,7 @@ async function handleCompletePayment() {
       branchId,
       cashierId,
       paymentMethod: selectedMethod.value,
-      cashTendered: selectedMethod.value === 'CASH' ? cashTendered.value : undefined
+      cashTendered: selectedMethod.value === 'CASH' ? cashTendered.value : undefined,
     });
 
     uiStore.showToast(`Order #${order.receipt_no} completed successfully!`, 'success');
@@ -104,9 +178,11 @@ async function handleCompletePayment() {
           type="button"
           @click="selectedMethod = 'CASH'"
           class="h-16 rounded-xl border flex flex-col items-center justify-center gap-1.5 font-bold text-xs transition"
-          :class="selectedMethod === 'CASH'
-            ? 'bg-teal-50 border-teal-400 text-teal-700'
-            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'"
+          :class="
+            selectedMethod === 'CASH'
+              ? 'bg-teal-50 border-teal-400 text-teal-700 shadow-xs'
+              : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+          "
         >
           <Banknote class="w-5 h-5" />
           <span>Cash</span>
@@ -116,9 +192,11 @@ async function handleCompletePayment() {
           type="button"
           @click="selectedMethod = 'CARD'"
           class="h-16 rounded-xl border flex flex-col items-center justify-center gap-1.5 font-bold text-xs transition"
-          :class="selectedMethod === 'CARD'
-            ? 'bg-teal-50 border-teal-400 text-teal-700'
-            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'"
+          :class="
+            selectedMethod === 'CARD'
+              ? 'bg-teal-50 border-teal-400 text-teal-700 shadow-xs'
+              : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+          "
         >
           <CreditCard class="w-5 h-5" />
           <span>Credit / Debit Card</span>
@@ -128,9 +206,11 @@ async function handleCompletePayment() {
           type="button"
           @click="selectedMethod = 'QR'"
           class="h-16 rounded-xl border flex flex-col items-center justify-center gap-1.5 font-bold text-xs transition"
-          :class="selectedMethod === 'QR'
-            ? 'bg-teal-50 border-teal-400 text-teal-700'
-            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'"
+          :class="
+            selectedMethod === 'QR'
+              ? 'bg-teal-50 border-teal-400 text-teal-700 shadow-xs'
+              : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+          "
         >
           <QrCode class="w-5 h-5" />
           <span>QR PromptPay / Code</span>
@@ -202,15 +282,98 @@ async function handleCompletePayment() {
         </div>
       </div>
 
-      <!-- Card / QR Instructions -->
-      <div v-else class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center flex flex-col items-center gap-2">
+      <!-- Card Swipe / Tap Instructions (When Card selected) -->
+      <div v-else-if="selectedMethod === 'CARD'" class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center flex flex-col items-center gap-2">
         <div class="w-12 h-12 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center">
-          <CheckCircle2 class="w-6 h-6" />
+          <CreditCard class="w-6 h-6" />
         </div>
-        <h4 class="text-sm font-bold text-slate-800">Ready for {{ selectedMethod === 'CARD' ? 'Card Swipe / Tap' : 'QR Scan' }}</h4>
+        <h4 class="text-sm font-bold text-slate-800">Ready for Card Swipe / Tap</h4>
         <p class="text-xs text-slate-500 max-w-xs">
-          Terminal is listening. Tap "Complete Transaction" once authorized on the physical EFTPOS / QR terminal.
+          Insert, swipe, or tap customer card on terminal. Tap "Complete Transaction" once authorized on the physical EFTPOS / Card terminal.
         </p>
+      </div>
+
+      <!-- QR Payment (When QR selected) -->
+      <div v-else-if="selectedMethod === 'QR'" class="flex flex-col items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+        <!-- Hidden file input for uploading QR code -->
+        <input
+          ref="qrFileInput"
+          type="file"
+          accept="image/*"
+          class="hidden"
+          @change="handleQrImageUpload"
+        />
+
+        <!-- If QR image is configured -->
+        <template v-if="qrImageUrl">
+          <div class="text-center">
+            <h4 class="text-[13.5px] font-bold text-slate-800">Scan QR Code to Pay</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Supports ABA KHQR, PromptPay, Bakong, Wing, or Any Banking App
+            </p>
+          </div>
+
+          <!-- QR Image Card -->
+          <div class="relative bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center">
+            <img
+              :src="resolveQrImageUrl(qrImageUrl)"
+              alt="Payment QR Code"
+              class="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-xl select-none"
+              loading="lazy"
+            />
+            <div
+              v-if="isUploadingQr"
+              class="absolute inset-0 bg-white/80 backdrop-blur-xs rounded-2xl flex flex-col items-center justify-center gap-2"
+            >
+              <RefreshCw class="w-6 h-6 text-teal-600 animate-spin" />
+              <span class="text-xs font-semibold text-teal-700">Updating QR...</span>
+            </div>
+          </div>
+
+          <!-- Total Due badge -->
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold">
+            <span>Amount Due:</span>
+            <span class="font-extrabold text-teal-700 font-mono text-sm">${{ cartStore.totalDue.toFixed(2) }}</span>
+          </div>
+
+          <!-- Admin Quick Action: Change QR -->
+          <div class="flex items-center gap-3 mt-0.5">
+            <button
+              type="button"
+              @click="qrFileInput?.click()"
+              :disabled="isUploadingQr"
+              class="flex items-center gap-1.5 text-[11.5px] font-semibold text-teal-600 hover:text-teal-700 transition hover:underline"
+            >
+              <Upload class="w-3.5 h-3.5" />
+              <span>{{ isUploadingQr ? 'Uploading...' : 'Change QR Image' }}</span>
+            </button>
+          </div>
+        </template>
+
+        <!-- If NO QR image configured yet -->
+        <template v-else>
+          <div class="w-full py-6 flex flex-col items-center justify-center text-center gap-2.5">
+            <div class="w-14 h-14 rounded-2xl bg-white border border-dashed border-slate-300 flex items-center justify-center text-slate-400 shadow-xs">
+              <QrCode class="w-7 h-7" />
+            </div>
+            <div>
+              <h4 class="text-[13.5px] font-bold text-slate-800">No Payment QR Configured</h4>
+              <p class="text-[11.5px] text-slate-400 max-w-xs mt-1">
+                Admin can upload a merchant payment QR code (ABA KHQR, PromptPay, Wing) to show directly to customers here.
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="qrFileInput?.click()"
+              :disabled="isUploadingQr"
+              class="mt-1 px-4 py-2 rounded-xl bg-teal-600 text-white font-semibold text-xs flex items-center gap-1.5 hover:bg-teal-700 shadow-sm transition disabled:opacity-50"
+            >
+              <RefreshCw v-if="isUploadingQr" class="w-3.5 h-3.5 animate-spin" />
+              <Upload v-else class="w-3.5 h-3.5" />
+              <span>{{ isUploadingQr ? 'Uploading...' : 'Upload Payment QR Image' }}</span>
+            </button>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -228,7 +391,7 @@ async function handleCompletePayment() {
         type="button"
         @click="handleCompletePayment"
         :disabled="!canSubmit || isProcessing"
-        class="px-6 py-2.5 rounded-xl text-sm font-bold text-white glow-btn-primary flex items-center gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        class="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 flex items-center gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
       >
         <span v-if="isProcessing">Processing...</span>
         <template v-else>
