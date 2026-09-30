@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Light "OMNI POS Enterprise" back-office shell.
+ * Light "KIRI POS Enterprise" back-office shell.
  *
  * The original POS Terminal / Tables / Register screens use the dark
  * "Obsidian Luxury" AppHeader shell and are left untouched. This shell
@@ -62,7 +62,7 @@ function handleLogout() {
           <LayoutGrid class="w-4 h-4" />
         </div>
         <div class="leading-tight">
-          <div class="text-[13px] font-extrabold text-teal-700 tracking-tight">OMNI POS</div>
+          <div class="text-[13px] font-extrabold text-teal-700 tracking-tight">KIRI POS</div>
           <div class="text-[9px] font-semibold text-slate-400 tracking-wide">Enterprise</div>
         </div>
       </div>

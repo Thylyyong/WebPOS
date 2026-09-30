@@ -25,13 +25,13 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 const settings = ref<StoreSettings>({
-  store_name: 'OmniPOS Bistro',
+  store_name: 'KIRI POS',
   store_address: '124 Grand Avenue, Suite 400',
   store_phone: '+1 (555) 019-2834',
-  store_email: 'contact@omnipos-bistro.com',
+  store_email: 'contact@kiripos.com',
   currency_symbol: '$',
   default_tax_rate: '10',
-  receipt_header: 'Welcome to OmniPOS Bistro!',
+  receipt_header: 'Welcome to KIRI POS!',
   receipt_footer: 'Thank you for dining with us! Please come again.',
   qr_code_image: '',
   khqr_payload: '',

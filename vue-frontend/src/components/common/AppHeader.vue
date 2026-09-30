@@ -55,7 +55,7 @@ function handleLogout() {
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <span class="font-extrabold text-white text-base tracking-tight">OmniPOS</span>
+          <span class="font-extrabold text-white text-base tracking-tight">KIRI POS</span>
           <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Terminal</span>
         </div>
         <div class="text-xs text-slate-400 flex items-center gap-1.5">

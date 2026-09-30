@@ -73,7 +73,7 @@ const shown = [
         </div>
 
         <div>
-          <h3 class="text-xl font-bold text-slate-900">Explore the WebPOS system</h3>
+          <h3 class="text-xl font-bold text-slate-900">Explore the KIRI POS system</h3>
           <p class="mt-3 text-[15px] leading-relaxed text-slate-600">
             Take a quick look at how the system helps restaurant staff take orders, manage tables,
             and keep daily operations in one place.

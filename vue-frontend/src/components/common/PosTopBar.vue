@@ -48,7 +48,7 @@ onMounted(() => {
       <div class="min-w-0">
         <div class="flex items-center gap-2">
           <h1 class="text-[14.5px] font-extrabold text-slate-900 truncate">
-            Gourmet Bistro POS
+            KIRI POS
           </h1>
 
           <span

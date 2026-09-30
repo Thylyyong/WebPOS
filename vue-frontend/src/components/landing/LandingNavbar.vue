@@ -39,7 +39,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll));
         <span class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-sm">
           <LayoutGrid class="w-5 h-5" />
         </span>
-        <span class="text-[17px] font-extrabold tracking-tight text-slate-900">OmniPOS</span>
+        <span class="text-[17px] font-extrabold tracking-tight text-slate-900">KIRI POS</span>
       </a>
 
       <ul class="hidden md:flex items-center gap-8">

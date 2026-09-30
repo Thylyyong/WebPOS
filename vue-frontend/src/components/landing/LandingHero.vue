@@ -32,7 +32,7 @@ const points = ['Dine-in & takeaway checkout', 'Live table floor plan', 'Shift &
             to="/login"
             class="h-12 px-6 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[15px] font-semibold inline-flex items-center gap-2 shadow-sm transition-colors"
           >
-            Login to WebPOS <ArrowRight class="w-4 h-4" />
+            Login to KIRI POS <ArrowRight class="w-4 h-4" />
           </RouterLink>
           <button
             type="button"
@@ -60,7 +60,7 @@ const points = ['Dine-in & takeaway checkout', 'Live table floor plan', 'Shift &
           </div>
           <img
             src="/images/screen-pos.jpg"
-            alt="OmniPOS terminal showing the menu grid and current order"
+            alt="KIRI POS terminal showing the menu grid and current order"
             class="w-full block"
             width="1400"
             height="797"
@@ -70,7 +70,7 @@ const points = ['Dine-in & takeaway checkout', 'Live table floor plan', 'Shift &
         <div class="hidden sm:block absolute -bottom-8 -left-8 w-[52%] rounded-xl bg-white border border-slate-200 shadow-lg shadow-slate-900/10 overflow-hidden">
           <img
             src="/images/screen-tables.jpg"
-            alt="OmniPOS floor plan with available and occupied tables"
+            alt="KIRI POS floor plan with available and occupied tables"
             class="w-full block"
             loading="lazy"
           />

@@ -68,8 +68,8 @@ function instantCashierLogin() {
         <div class="w-14 h-14 rounded-2xl bg-teal-600 flex items-center justify-center text-white shadow-lg mb-3">
           <LayoutGrid class="w-7 h-7" />
         </div>
-        <h1 class="text-xl font-black text-slate-900 tracking-tight">Gourmet Bistro POS</h1>
-        <p class="text-[11px] text-slate-400 mt-0.5">OmniPOS Enterprise · Multi-Branch POS Suite</p>
+        <h1 class="text-xl font-black text-slate-900 tracking-tight">KIRI POS</h1>
+        <p class="text-[11px] text-slate-400 mt-0.5">KIRI POS Enterprise · Multi-Branch POS Suite</p>
         <span class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 text-sky-600 border border-sky-200 text-[10px] font-bold">
           100% OFFLINE READY · DUAL-SCREEN &amp; CASH DRAWER ACTIVE
         </span>
@@ -77,7 +77,7 @@ function instantCashierLogin() {
 
       <!-- Sign-in Card -->
       <div class="w-full bg-white border border-slate-200 rounded-3xl shadow-sm p-6 flex flex-col items-center">
-        <p class="text-[11px] font-bold text-slate-400 tracking-wider mb-4 self-start">SIGN IN TO OMNI POS</p>
+        <p class="text-[11px] font-bold text-slate-400 tracking-wider mb-4 self-start">SIGN IN TO KIRI POS</p>
         <p class="text-[10px] font-bold text-slate-400 tracking-wider mb-2 self-start">SELECT ROLE TO SIGN IN</p>
 
         <div class="grid grid-cols-2 gap-3 w-full mb-4">

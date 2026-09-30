@@ -25,7 +25,7 @@ function printReceipt() {
       >
         <!-- Header -->
         <div class="text-center pb-3 border-b border-dashed border-gray-400">
-          <h2 class="text-base font-black tracking-wider uppercase">OMNIPOS BISTRO</h2>
+          <h2 class="text-base font-black tracking-wider uppercase">KIRI POS</h2>
           <p class="text-[11px] text-gray-600">124 Grand Avenue, Suite 400</p>
           <p class="text-[11px] text-gray-600">Tel: +1 (555) 019-2834</p>
           <p class="mt-2 text-[10px] text-gray-500 font-sans">

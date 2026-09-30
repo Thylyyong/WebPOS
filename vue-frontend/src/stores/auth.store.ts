@@ -11,7 +11,7 @@ export const useAuthStore = defineStore('auth', () => {
   const activeBranch = ref<{ id: string; name: string }>(
     localStorage.getItem('pos_branch')
       ? JSON.parse(localStorage.getItem('pos_branch')!)
-      : { id: 'store_main', name: 'OmniPOS Main Store' }
+      : { id: 'store_main', name: 'KIRI POS Main Store' }
   );
 
   const isAuthenticated = computed(() => !!token.value && !!user.value);
@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       const branchObj = {
         id: res.data.user.branch_id || 'store_main',
-        name: res.data.user.branch_name || 'OmniPOS Main Store'
+        name: res.data.user.branch_name || 'KIRI POS Main Store'
       };
       activeBranch.value = branchObj;
       localStorage.setItem('pos_branch', JSON.stringify(branchObj));

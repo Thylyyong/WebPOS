@@ -32,7 +32,7 @@ function printZReport() {
       >
         <div class="text-center pb-3 border-b border-dashed border-gray-400">
           <h2 class="text-base font-black tracking-widest uppercase">DAILY SHIFT Z-REPORT</h2>
-          <p class="text-[11px] text-gray-700">OmniPOS Main Bistro</p>
+          <p class="text-[11px] text-gray-700">KIRI POS Main Branch</p>
           <p class="text-[10px] text-gray-500 mt-1 font-sans">
             Session: <span class="font-mono font-bold">{{ data.session_id }}</span>
           </p>

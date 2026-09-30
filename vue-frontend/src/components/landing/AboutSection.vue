@@ -15,7 +15,7 @@ const items = [
         <p class="text-[13px] font-bold tracking-wider text-teal-600 uppercase">About</p>
         <h2 class="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">One system for daily operations</h2>
         <p class="mt-5 text-[16px] leading-relaxed text-slate-600">
-          OmniPOS brings ordering, tables, cash handling, and reporting together so restaurant
+          KIRI POS brings ordering, tables, cash handling, and reporting together so restaurant
           staff spend less time switching between tools and more time serving guests.
         </p>
       </div>

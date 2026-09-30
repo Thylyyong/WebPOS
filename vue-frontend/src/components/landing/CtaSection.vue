@@ -15,7 +15,7 @@ import { ArrowRight } from 'lucide-vue-next';
           to="/login"
           class="mt-8 h-12 px-7 rounded-xl bg-white hover:bg-teal-50 text-teal-700 text-[15px] font-bold inline-flex items-center gap-2 transition-colors"
         >
-          Login to WebPOS <ArrowRight class="w-4 h-4" />
+          Login to KIRI POS <ArrowRight class="w-4 h-4" />
         </RouterLink>
       </div>
     </div>
