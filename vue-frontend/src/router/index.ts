@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth.store';
 import { useUiStore } from '../stores/ui.store';
 
+import LandingView from '../views/LandingView.vue';
 import LoginView from '../views/LoginView.vue';
 import PosTerminalView from '../views/PosTerminalView.vue';
 import TablesView from '../views/TablesView.vue';
@@ -14,6 +15,12 @@ import HistoryView from '../views/HistoryView.vue';
 import AnalyticsView from '../views/AnalyticsView.vue';
 
 const routes = [
+  {
+    path: '/',
+    name: 'landing',
+    component: LandingView,
+    meta: { public: true, title: 'Welcome' }
+  },
   {
     path: '/login',
     name: 'login',
