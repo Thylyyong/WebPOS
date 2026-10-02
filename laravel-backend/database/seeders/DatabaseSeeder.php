@@ -128,6 +128,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 1.60,
                 'stock_quantity' => 90,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734511_YdqWWefh.jpg',
             ],
             [
                 'id' => 'prod_iced_tea',
@@ -139,6 +140,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 0.90,
                 'stock_quantity' => 100,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734540_NKhA3uq7.jpg',
             ],
 
             // Gourmet Food
@@ -152,6 +154,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 5.80,
                 'stock_quantity' => 50,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734766_EkBt8Y3n.jpg',
             ],
             [
                 'id' => 'prod_crispy_chicken',
@@ -163,6 +166,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 4.20,
                 'stock_quantity' => 60,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734690_UopbyJL0.jpg',
             ],
             [
                 'id' => 'prod_truffle_fries',
@@ -174,6 +178,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 1.90,
                 'stock_quantity' => 80,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734722_pqo7T8z4.jpg',
             ],
             [
                 'id' => 'prod_pasta_carbonara',
@@ -185,6 +190,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 4.50,
                 'stock_quantity' => 45,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734660_Rqxv0Znp.jpg',
             ],
 
             // Bakery & Dessert
@@ -220,6 +226,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 1.95,
                 'stock_quantity' => 30,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734830_5FFNGV3D.jpg',
             ],
             [
                 'id' => 'prod_brownie',
@@ -231,6 +238,7 @@ class DatabaseSeeder extends Seeder
                 'cost' => 1.30,
                 'stock_quantity' => 50,
                 'is_available' => true,
+                'image_path' => 'uploads/products/prod_1790734800_o3tPvuvd.jpg',
             ],
         ];
 
