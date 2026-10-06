@@ -250,6 +250,7 @@ Open a table and assign customer/party name.
 ### 5.1 Process POS Checkout
 Completes an order, calculates tax and change, logs a printable thermal receipt, and updates table status.
 - **Endpoint**: `POST /api/orders`
+- **Optional**: `order_id` — id of a `PARKED` (held) order to complete in place instead of creating a new order (see 5.2).
 - **Request Body**:
 ```json
 {
@@ -304,9 +305,13 @@ Completes an order, calculates tax and change, logs a printable thermal receipt,
 }
 ```
 
-### 5.2 Hold Cart Order
+### 5.2 Hold Cart Order (Pending / Hold)
 - **Endpoint**: `POST /api/orders/hold`
-- **Request Body**: `{ "branch_id": "store_main" }`
+- **Request Body**: `branch_id`, `subtotal`, `total_amount`, `items[]` (required); optional `order_id`, `table_id`, `table_number`, `customer_name`, `order_type`, `discount_amount`, `discount_percent`, `tax_amount`.
+- Creates a `PARKED` order. When `table_id` is sent the table is linked to the held order (`current_order_id`) and marked `OCCUPIED` if it was `AVAILABLE`.
+- **Continue an existing held order**: send `order_id` of a `PARKED` order and that same order is updated in place (items replaced) instead of creating a new ticket. Returns `422` if the order is no longer `PARKED`.
+- **Pay a held order**: send the same `order_id` to `POST /api/orders` (see 5.1). The held order is completed in place (same `id`, real receipt number, items = final cart, stock decremented once, table released) rather than creating a second order. Returns `422` if the order is no longer `PARKED` (e.g. already paid).
+- `GET /api/orders/parked?branch_id=...` lists held orders (includes `items`, `table_id`, `table_number`).
 
 ### 5.3 Split Bill
 - **Endpoint**: `POST /api/orders/{id}/split`

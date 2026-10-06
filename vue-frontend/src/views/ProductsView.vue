@@ -3,7 +3,9 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import { catalogApi } from '../api/catalog.api';
 import { useUiStore } from '../stores/ui.store';
+import { useAuthStore } from '../stores/auth.store';
 import type { Category, Product } from '../types/pos.types';
+import { categoryTracksStock, productTracksStock } from '../utils/stock';
 import {
   Plus,
   Search,
@@ -19,6 +21,7 @@ import {
 } from 'lucide-vue-next';
 
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 const categories = ref<Category[]>([]);
 const products = ref<Product[]>([]);
 const isLoading = ref(false);
@@ -103,6 +106,9 @@ const form = ref({
   is_available: true,
   description: '',
 });
+
+// Coffee & Drink categories have no stock amount; all other categories keep it.
+const formTracksStock = computed(() => categoryTracksStock(form.value.category_id, categories.value));
 
 const formSubcategories = computed(() => {
   if (!form.value.category_id) return [];
@@ -232,7 +238,9 @@ async function submitProduct() {
     formData.append('cost', String(form.value.cost || 0));
     if (form.value.sku) formData.append('sku', form.value.sku.trim());
     if (form.value.barcode) formData.append('barcode', form.value.barcode.trim());
-    formData.append('stock_quantity', String(form.value.stock_quantity ?? 0));
+    if (formTracksStock.value) {
+      formData.append('stock_quantity', String(form.value.stock_quantity ?? 0));
+    }
     formData.append('tax_rate', String(form.value.tax_rate ?? 0));
     formData.append('is_available', form.value.is_available ? '1' : '0');
     if (form.value.description) formData.append('description', form.value.description.trim());
@@ -321,7 +329,7 @@ async function saveStock() {
 <template>
   <AppSidebarShell>
     <template #title>Product &amp; SKU Catalog</template>
-    <template #subtitle>Manage menu items, prices, barcodes and stock</template>
+    <template #subtitle>{{ authStore.isBoss ? 'Manage menu items, prices, barcodes and stock' : 'Browse menu items, prices and stock availability' }}</template>
     <template #actions>
       <div class="relative w-64 hidden sm:block">
         <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -340,6 +348,7 @@ async function saveStock() {
         <RefreshCw class="w-3.5 h-3.5" :class="isLoading && 'animate-spin'" />
       </button>
       <button
+        v-if="authStore.isBoss"
         @click="openAdd"
         class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition-colors"
       >
@@ -418,21 +427,23 @@ async function saveStock() {
         <!-- Pricing -->
         <div class="text-right shrink-0">
           <div class="text-[13.5px] font-bold text-slate-800">${{ Number(p.price).toFixed(2) }}</div>
-          <div class="text-[10.5px] text-slate-400">Cost: ${{ Number(p.cost).toFixed(2) }}</div>
+          <div v-if="authStore.isBoss" class="text-[10.5px] text-slate-400">Cost: ${{ Number(p.cost).toFixed(2) }}</div>
         </div>
 
         <!-- Stock Badge (clickable for quick stock adjust) -->
         <button
-          @click="openStockEdit(p)"
-          class="px-2 py-1 rounded-md text-[10.5px] font-bold shrink-0 transition-opacity hover:opacity-80"
+          v-if="productTracksStock(p, categories)"
+          @click="authStore.isBoss && openStockEdit(p)"
+          :disabled="!authStore.isBoss"
+          class="px-2 py-1 rounded-md text-[10.5px] font-bold shrink-0 transition-opacity hover:opacity-80 disabled:cursor-default disabled:hover:opacity-100"
           :class="p.stock_quantity > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'"
-          title="Click to quick-adjust stock"
+          :title="authStore.isBoss ? 'Click to quick-adjust stock' : undefined"
         >
           {{ p.stock_quantity > 0 ? `${p.stock_quantity} IN STOCK` : 'OUT OF STOCK' }}
         </button>
 
-        <!-- Actions -->
-        <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Actions (Owner/Admin only) -->
+        <div v-if="authStore.isBoss" class="flex items-center gap-1.5 shrink-0">
           <button
             @click="openEdit(p)"
             class="p-2 rounded-lg border border-slate-200 text-slate-500 hover:text-teal-600 hover:bg-teal-50/50 hover:border-teal-300 transition-colors"
@@ -646,7 +657,7 @@ async function saveStock() {
 
           <!-- Stock & Tax Rate -->
           <div class="grid grid-cols-2 gap-3">
-            <div>
+            <div v-if="formTracksStock">
               <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                 Stock Quantity
               </label>

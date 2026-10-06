@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import { catalogApi } from '../api/catalog.api';
 import { useUiStore } from '../stores/ui.store';
+import { useAuthStore } from '../stores/auth.store';
 import type { Category, Subcategory } from '../types/pos.types';
 import {
   Plus,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-vue-next';
 
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 const categories = ref<Category[]>([]);
 const isLoading = ref(false);
 const search = ref('');
@@ -227,7 +229,7 @@ async function handleDeleteSubcategory() {
 <template>
   <AppSidebarShell>
     <template #title>Menu &amp; Categories</template>
-    <template #subtitle>Organize catalog menu categories and subcategories</template>
+    <template #subtitle>{{ authStore.isBoss ? 'Organize catalog menu categories and subcategories' : 'Browse menu categories and subcategories' }}</template>
     <template #actions>
       <div class="relative w-64 hidden sm:block">
         <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -246,6 +248,7 @@ async function handleDeleteSubcategory() {
         <RefreshCw class="w-3.5 h-3.5" :class="isLoading && 'animate-spin'" />
       </button>
       <button
+        v-if="authStore.isBoss"
         @click="openAddCategory"
         class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition-colors"
       >
@@ -288,6 +291,7 @@ async function handleDeleteSubcategory() {
           <!-- Actions -->
           <div class="flex items-center gap-1.5">
             <button
+              v-if="authStore.isBoss"
               @click="openAddSubcategory(cat)"
               class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold border border-slate-200 text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
             >
@@ -295,6 +299,7 @@ async function handleDeleteSubcategory() {
               Add Subcategory
             </button>
             <button
+              v-if="authStore.isBoss"
               @click="openEditCategory(cat)"
               class="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-teal-600 transition-colors"
               title="Edit category"
@@ -302,6 +307,7 @@ async function handleDeleteSubcategory() {
               <Pencil class="w-3.5 h-3.5" />
             </button>
             <button
+              v-if="authStore.isBoss"
               @click="confirmDeleteCategory(cat)"
               class="p-2 rounded-lg border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors"
               title="Delete category"
@@ -328,6 +334,7 @@ async function handleDeleteSubcategory() {
           >
             <span>{{ sub.name }}</span>
             <button
+              v-if="authStore.isBoss"
               @click="confirmDeleteSubcategory(sub)"
               class="w-4 h-4 rounded-full flex items-center justify-center text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition-colors"
               title="Delete subcategory"
@@ -339,6 +346,7 @@ async function handleDeleteSubcategory() {
             No subcategories yet.
           </span>
           <button
+            v-if="authStore.isBoss"
             @click="openAddSubcategory(cat)"
             class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-dashed border-slate-300 text-[11.5px] font-medium text-slate-500 hover:border-teal-500 hover:text-teal-600 transition-colors"
           >

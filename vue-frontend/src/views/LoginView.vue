@@ -1,62 +1,65 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.store';
 import { useUiStore } from '../stores/ui.store';
-import { authApi } from '../api/auth.api';
 import PinPad from '../components/common/PinPad.vue';
-import { ShieldCheck, UserCheck, Sparkles, KeyRound, LayoutGrid } from 'lucide-vue-next';
+import { ShieldCheck, UserCheck, KeyRound, LayoutGrid, LogIn } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 
+// 'staff' = individual cashier/staff account (name or username + password)
+// 'boss'  = Owner/Admin PIN pad (unchanged)
+const mode = ref<'staff' | 'boss'>('staff');
 const pin = ref('');
-const selectedUsername = ref<string>('cashier');
+const loginName = ref('');
+const loginPassword = ref('');
 const isSubmitting = ref(false);
-const availableRoles = ref<any[]>([]);
 
-onMounted(async () => {
-  try {
-    const res = await authApi.getRoles();
-    if (res.data.success && res.data.roles) {
-      availableRoles.value = res.data.roles;
-    }
-  } catch (_) {
-    availableRoles.value = [
-      { id: 16, name: 'Boss', username: 'boss', role: 'BOSS' },
-      { id: 17, name: 'Cashier', username: 'cashier', role: 'CASHIER' }
-    ];
-  }
-});
+function loginErrorMessage(err: any, fallback: string): string {
+  return err?.response?.data?.message || err?.message || fallback;
+}
 
+// Owner/Admin: existing PIN pad flow
 async function handlePinSubmit(code: string) {
   if (isSubmitting.value) return;
   isSubmitting.value = true;
   try {
-    const res = await authStore.loginWithPin(code, selectedUsername.value);
+    const res = await authStore.loginWithPin(code, 'boss');
     uiStore.showToast(`Welcome back, ${res.user.name}!`, 'success');
     router.push('/pos');
   } catch (err: any) {
-    uiStore.showToast(err.message || 'Invalid PIN code', 'error');
+    uiStore.showToast(loginErrorMessage(err, 'Invalid PIN code'), 'error');
     pin.value = '';
   } finally {
     isSubmitting.value = false;
   }
 }
 
-function quickLogin(username: string, defaultPin: string) {
-  selectedUsername.value = username;
-  pin.value = defaultPin;
-  handlePinSubmit(defaultPin);
-}
-
-// Staff Cashier gets a one-tap sign-in (no PIN screen shown), matching the
-// reference screenshot; Boss still goes through the PIN pad below since
-// that role has full financial/oversight access.
-function instantCashierLogin() {
-  selectedUsername.value = 'cashier';
-  quickLogin('cashier', '1234');
+// Individual cashier/staff: the account the Admin created in Settings → Staff Controller
+async function handleStaffLogin() {
+  if (isSubmitting.value) return;
+  const name = loginName.value.trim();
+  if (!name || !loginPassword.value) {
+    uiStore.showToast('Enter your name or username and password', 'warning');
+    return;
+  }
+  isSubmitting.value = true;
+  try {
+    const res = await authStore.loginWithPin(loginPassword.value, name);
+    uiStore.showToast(`Welcome back, ${res.user.name}!`, 'success');
+    router.push('/pos');
+  } catch (err: any) {
+    uiStore.showToast(
+      err?.response?.status === 401 ? 'Invalid name/username or password' : loginErrorMessage(err, 'Login failed'),
+      'error'
+    );
+    loginPassword.value = '';
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 </script>
 
@@ -83,21 +86,21 @@ function instantCashierLogin() {
         <div class="grid grid-cols-2 gap-3 w-full mb-4">
           <button
             type="button"
-            @click="selectedUsername = 'cashier'; pin = ''"
+            @click="mode = 'staff'; pin = ''"
             class="p-4 rounded-2xl border flex flex-col items-center text-center transition-all duration-200"
-            :class="selectedUsername === 'cashier'
+            :class="mode === 'staff'
               ? 'bg-teal-600 border-teal-600 text-white shadow-md'
               : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
           >
             <UserCheck class="w-6 h-6 mb-1.5" />
-            <span class="text-[12.5px] font-bold">Staff Cashier</span>
+            <span class="text-[12.5px] font-bold">Staff / Cashier</span>
           </button>
 
           <button
             type="button"
-            @click="selectedUsername = 'boss'; pin = ''"
+            @click="mode = 'boss'; pin = ''"
             class="p-4 rounded-2xl border flex flex-col items-center text-center transition-all duration-200"
-            :class="selectedUsername === 'boss'
+            :class="mode === 'boss'
               ? 'bg-violet-600 border-violet-600 text-white shadow-md'
               : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
           >
@@ -107,20 +110,45 @@ function instantCashierLogin() {
         </div>
 
         <p class="text-[11px] text-slate-400 mb-4">
-          {{ selectedUsername === 'cashier' ? 'Instant frontline POS checkout' : 'Full oversight, P&L and settings access' }}
+          {{ mode === 'staff' ? 'Sign in with your own staff account' : 'Full oversight, P&L and settings access' }}
         </p>
 
-        <!-- Cashier: one-tap sign in -->
-        <button
-          v-if="selectedUsername === 'cashier'"
-          type="button"
-          :disabled="isSubmitting"
-          @click="instantCashierLogin"
-          class="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[13px] font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
-        >
-          <Sparkles class="w-4 h-4" />
-          Login as Staff Cashier
-        </button>
+        <!-- Staff / Cashier: own account -->
+        <form v-if="mode === 'staff'" class="w-full flex flex-col gap-3" @submit.prevent="handleStaffLogin">
+          <div class="flex flex-col gap-1">
+            <label class="text-[11px] font-semibold text-slate-500">Name / Username</label>
+            <input
+              v-model="loginName"
+              type="text"
+              autocomplete="username"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+              placeholder="e.g. Dara"
+              :disabled="isSubmitting"
+              class="h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white disabled:opacity-50"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-[11px] font-semibold text-slate-500">Password</label>
+            <input
+              v-model="loginPassword"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Password"
+              :disabled="isSubmitting"
+              class="h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white disabled:opacity-50"
+            />
+          </div>
+          <button
+            type="submit"
+            :disabled="isSubmitting"
+            class="w-full h-12 mt-1 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[13px] font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
+          >
+            <LogIn class="w-4 h-4" />
+            {{ isSubmitting ? 'Signing in...' : 'Login' }}
+          </button>
+        </form>
 
         <!-- Boss: PIN required -->
         <div v-else class="w-full flex flex-col items-center">

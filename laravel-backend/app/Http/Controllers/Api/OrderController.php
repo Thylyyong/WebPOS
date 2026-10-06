@@ -72,6 +72,7 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'branch_id' => 'required|string|exists:branches,id',
+            'order_id' => 'nullable|string', // set when completing an existing PARKED/held order
             'cashier_id' => 'nullable|integer|exists:users,id',
             'table_id' => 'nullable|string',
             'table_number' => 'nullable|string',
@@ -97,14 +98,30 @@ class OrderController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
+            // Completing an existing held (PARKED) order: reuse that order record
+            // instead of creating a second one.
+            $parked = null;
+            if (!empty($validated['order_id'])) {
+                $parked = Order::where('id', $validated['order_id'])
+                    ->where('branch_id', $validated['branch_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$parked || $parked->status !== 'PARKED') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This held order is no longer available (already paid, cancelled or removed).',
+                    ], 422);
+                }
+            }
+
             $orderId = 'ord_' . Str::random(10);
             $datePrefix = Carbon::now()->format('Ymd');
             $randomSeq = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             $receiptNo = "RCP-{$datePrefix}-{$randomSeq}";
             $orderNumber = '#' . substr($randomSeq, -3);
 
-            $order = Order::create([
-                'id' => $orderId,
+            $attributes = [
                 'branch_id' => $validated['branch_id'],
                 'receipt_no' => $receiptNo,
                 'order_number' => $orderNumber,
@@ -124,7 +141,28 @@ class OrderController extends Controller
                 'change_amount' => $validated['change_amount'] ?? 0.00,
                 'status' => 'COMPLETED',
                 'kitchen_status' => 'PREPARING',
-            ]);
+            ];
+
+            if ($parked) {
+                // If the cashier detached/changed the table while continuing the order,
+                // free the table that was linked to the held order.
+                if ($parked->table_id && $parked->table_id !== ($validated['table_id'] ?? null)) {
+                    $this->unlinkTableFromOrder($parked->table_id, $parked->id);
+                }
+
+                // Items are replaced with the final cart contents (held orders never
+                // touched stock, so inventory is adjusted below exactly once).
+                $parked->items()->delete();
+                $parked->fill($attributes);
+                // Count the sale in the period it was actually paid so register
+                // sessions / Z-reports (which filter on created_at) stay consistent
+                // with the running totals incremented below.
+                $parked->created_at = Carbon::now();
+                $parked->save();
+                $order = $parked;
+            } else {
+                $order = Order::create(['id' => $orderId] + $attributes);
+            }
 
             // Create Order Items and adjust inventory
             foreach ($validated['items'] as $itemData) {
@@ -199,52 +237,121 @@ class OrderController extends Controller
     }
 
     /**
-     * Park / Hold an active order
+     * Park / Hold an active order.
+     *
+     * When `order_id` is supplied the existing PARKED order is updated in place
+     * (continue-order flow: resume -> add/modify items -> hold again) instead of
+     * creating a second held ticket.
      */
     public function holdOrder(Request $request)
     {
         $validated = $request->validate([
             'branch_id' => 'required|string',
+            'order_id' => 'nullable|string',
             'customer_name' => 'nullable|string',
+            'table_id' => 'nullable|string',
             'table_number' => 'nullable|string',
+            'order_type' => 'nullable|string',
             'subtotal' => 'required|numeric',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'discount_percent' => 'nullable|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
             'total_amount' => 'required|numeric',
             'items' => 'required|array|min:1',
         ]);
 
-        $orderId = 'park_' . Str::random(8);
-        $receiptNo = 'PARK-' . Carbon::now()->format('His');
+        return DB::transaction(function () use ($validated, $request) {
+            $existing = null;
+            if (!empty($validated['order_id'])) {
+                $existing = Order::where('id', $validated['order_id'])
+                    ->where('branch_id', $validated['branch_id'])
+                    ->lockForUpdate()
+                    ->first();
 
-        $order = Order::create([
-            'id' => $orderId,
-            'branch_id' => $validated['branch_id'],
-            'receipt_no' => $receiptNo,
-            'order_number' => 'HOLD',
-            'customer_name' => $validated['customer_name'] ?? 'Parked Ticket',
-            'table_number' => $validated['table_number'] ?? null,
-            'subtotal' => $validated['subtotal'],
-            'total_amount' => $validated['total_amount'],
-            'payment_method' => 'PENDING',
-            'status' => 'PARKED',
-        ]);
+                if (!$existing || $existing->status !== 'PARKED') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This held order is no longer available (already paid, cancelled or removed).',
+                    ], 422);
+                }
+            }
 
-        foreach ($validated['items'] as $item) {
-            OrderItem::create([
-                'id' => 'item_' . Str::random(10),
-                'order_id' => $order->id,
-                'product_id' => $item['product_id'] ?? null,
-                'product_name' => $item['product_name'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'total_price' => $item['total_price'],
+            $attributes = [
+                'branch_id' => $validated['branch_id'],
+                'cashier_id' => $request->user()?->id,
+                'customer_name' => $validated['customer_name'] ?? 'Parked Ticket',
+                'table_id' => $validated['table_id'] ?? null,
+                'table_number' => $validated['table_number'] ?? null,
+                'order_type' => $validated['order_type'] ?? 'DINE_IN',
+                'subtotal' => $validated['subtotal'],
+                'discount_amount' => $validated['discount_amount'] ?? 0.00,
+                'discount_percent' => $validated['discount_percent'] ?? 0.00,
+                'tax_amount' => $validated['tax_amount'] ?? 0.00,
+                'total_amount' => $validated['total_amount'],
+                'payment_method' => 'PENDING',
+                'status' => 'PARKED',
+            ];
+
+            if ($existing) {
+                if ($existing->table_id && $existing->table_id !== ($validated['table_id'] ?? null)) {
+                    $this->unlinkTableFromOrder($existing->table_id, $existing->id);
+                }
+                $existing->items()->delete();
+                $existing->fill($attributes)->save();
+                $order = $existing;
+            } else {
+                $order = Order::create([
+                    'id' => 'park_' . Str::random(8),
+                    'receipt_no' => 'PARK-' . Carbon::now()->format('His'),
+                    'order_number' => 'HOLD',
+                ] + $attributes);
+            }
+
+            foreach ($validated['items'] as $item) {
+                OrderItem::create([
+                    'id' => 'item_' . Str::random(10),
+                    'order_id' => $order->id,
+                    'product_id' => $item['product_id'] ?? null,
+                    'product_name' => $item['product_name'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'total_price' => $item['total_price'],
+                ]);
+            }
+
+            // Keep the table relationship: the table now points at this held order.
+            if (!empty($validated['table_id'])) {
+                $table = DiningTable::find($validated['table_id']);
+                if ($table) {
+                    if ($table->status === 'AVAILABLE') {
+                        $table->status = 'OCCUPIED';
+                    }
+                    $table->current_order_id = $order->id;
+                    $table->order_total = $validated['total_amount'];
+                    $table->save();
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $existing ? 'Held order updated successfully' : 'Order parked successfully',
+                'order' => $order->load('items'),
             ]);
-        }
+        });
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order parked successfully',
-            'order' => $order->load('items'),
-        ]);
+    /**
+     * Detach a held order from a table (only if the table still points at that order).
+     * The table itself stays occupied/untouched otherwise — releasing a table remains
+     * an explicit floor-plan action.
+     */
+    private function unlinkTableFromOrder(string $tableId, string $orderId): void
+    {
+        $table = DiningTable::find($tableId);
+        if ($table && $table->current_order_id === $orderId) {
+            $table->current_order_id = null;
+            $table->save();
+        }
     }
 
     /**
@@ -330,14 +437,50 @@ class OrderController extends Controller
             'reason' => 'required|string',
         ]);
 
-        $order = Order::findOrFail($id);
-        $order->status = 'CANCELLED';
-        $order->save();
+        return DB::transaction(function () use ($id) {
+            $order = Order::lockForUpdate()->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => "Order {$order->receipt_no} has been voided",
-            'order' => $order,
-        ]);
+            // Voiding twice must not reverse the register totals twice.
+            if ($order->status === 'CANCELLED') {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Order {$order->receipt_no} is already voided.",
+                ], 422);
+            }
+
+            $wasCompleted = $order->status === 'COMPLETED';
+
+            $order->status = 'CANCELLED';
+            $order->save();
+
+            // A completed sale was added to the register's running totals when it was paid.
+            // Take it back out so Expected Cash stays consistent with the orders, but only
+            // when that sale belongs to the currently open session: a session that is already
+            // closed keeps the reconciliation it was closed with.
+            if ($wasCompleted) {
+                $session = RegisterSession::where('branch_id', $order->branch_id)
+                    ->where('status', 'OPEN')
+                    ->latest('opened_at')
+                    ->first();
+
+                if ($session && $order->created_at && $order->created_at >= $session->opened_at) {
+                    $method = strtoupper((string) $order->payment_method);
+                    $session->decrement('total_orders', 1);
+                    if (str_contains($method, 'CASH')) {
+                        $session->decrement('total_cash_sales', $order->total_amount);
+                    } elseif (str_contains($method, 'QR')) {
+                        $session->decrement('total_qr_sales', $order->total_amount);
+                    } elseif (str_contains($method, 'CARD')) {
+                        $session->decrement('total_card_sales', $order->total_amount);
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Order {$order->receipt_no} has been voided",
+                'order' => $order,
+            ]);
+        });
     }
 }

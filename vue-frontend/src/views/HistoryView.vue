@@ -1,13 +1,34 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useCartStore } from '../stores/cart.store';
 import AppSidebarShell from '../components/common/AppSidebarShell.vue';
 import { useAuthStore } from '../stores/auth.store';
 import { useUiStore } from '../stores/ui.store';
 import { ordersApi, type OrderListItem } from '../api/orders.api';
-import { Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-vue-next';
+import { Search, ChevronLeft, ChevronRight, RefreshCw, ArrowRightCircle } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const uiStore = useUiStore();
+const cartStore = useCartStore();
+const router = useRouter();
+
+// Pending/Hold order -> back to the main POS terminal to continue the same order.
+async function continueOrder(o: OrderListItem) {
+  if (cartStore.resumedOrder?.id !== o.id) {
+    if (cartStore.items.length > 0 &&
+        !confirm('The current cart has items that are not saved. Replace it with this held order?')) {
+      return;
+    }
+    try {
+      await cartStore.resumeParkedOrder({ ...o, branch_id: authStore.activeBranch?.id } as any);
+    } catch (err: any) {
+      uiStore.showToast(err?.message || 'Failed to resume held order', 'error');
+      return;
+    }
+  }
+  router.push('/pos');
+}
 
 const orders = ref<OrderListItem[]>([]);
 const isLoading = ref(false);
@@ -107,6 +128,7 @@ function statusBadge(s: string) {
             <th class="px-4 py-2.5 font-semibold">Payment</th>
             <th class="px-4 py-2.5 font-semibold">Status</th>
             <th class="px-4 py-2.5 font-semibold text-right">Total</th>
+            <th class="px-4 py-2.5 font-semibold"></th>
           </tr>
         </thead>
         <tbody>
@@ -123,9 +145,20 @@ function statusBadge(s: string) {
               <span class="px-2 py-0.5 rounded-full text-[10.5px] font-semibold border" :class="statusBadge(o.status)">{{ o.status }}</span>
             </td>
             <td class="px-4 py-2.5 text-right font-semibold text-slate-800">{{ money(o.total_amount) }}</td>
+            <td class="px-4 py-2.5 text-right">
+              <button
+                v-if="o.status === 'PARKED'"
+                type="button"
+                @click="continueOrder(o)"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold transition"
+              >
+                <span>Continue</span>
+                <ArrowRightCircle class="w-3.5 h-3.5" />
+              </button>
+            </td>
           </tr>
           <tr v-if="!orders.length && !isLoading">
-            <td colspan="7" class="px-4 py-10 text-center text-slate-400">No orders found.</td>
+            <td colspan="8" class="px-4 py-10 text-center text-slate-400">No orders found.</td>
           </tr>
         </tbody>
       </table>

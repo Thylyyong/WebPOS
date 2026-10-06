@@ -53,7 +53,23 @@ async function handleRelease(table: DiningTable) {
   }
 }
 
-function handleOrder(table: DiningTable) {
+async function handleOrder(table: DiningTable) {
+  // A table with a Pending/Hold order continues THAT order instead of starting a second one.
+  const held = table.current_order;
+  if (held && held.status === 'PARKED' && cartStore.resumedOrder?.id !== held.id) {
+    if (cartStore.items.length > 0 &&
+        !confirm('The current cart has items that are not saved. Replace it with this table\'s held order?')) {
+      return;
+    }
+    try {
+      await cartStore.resumeParkedOrder(held);
+      router.push('/pos');
+      return;
+    } catch (err: any) {
+      uiStore.showToast(err?.message || 'Failed to resume held order', 'error');
+      return;
+    }
+  }
   cartStore.setTable(table);
   router.push('/pos');
 }

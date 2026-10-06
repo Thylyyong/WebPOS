@@ -2,9 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { RouterLink } from 'vue-router';
 import { LayoutGrid, Menu, X } from 'lucide-vue-next';
-import { useAuthStore } from '../../stores/auth.store';
 
-const authStore = useAuthStore();
 const open = ref(false);
 const scrolled = ref(false);
 
@@ -56,7 +54,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll));
         <RouterLink
           to="/login"
           class="h-10 px-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[14px] font-semibold inline-flex items-center transition-colors"
-        >{{ authStore.isAuthenticated ? 'Open POS' : 'Login' }}</RouterLink>
+        >Login</RouterLink>
         <button
           type="button"
           class="md:hidden w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-700 flex items-center justify-center"

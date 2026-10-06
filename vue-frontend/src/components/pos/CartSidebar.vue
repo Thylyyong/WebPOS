@@ -19,7 +19,8 @@ import {
   FolderOpen,
   User,
   MapPin,
-  X
+  X,
+  RotateCcw
 } from 'lucide-vue-next';
 import type { PaymentMethod } from '../../types/pos.types';
 
@@ -42,8 +43,9 @@ async function handleHoldCart() {
   if (cartStore.items.length === 0) return;
   try {
     const branchId = authStore.activeBranch?.id || 'store_main';
+    const wasResumed = !!cartStore.resumedOrder;
     await cartStore.holdOrder(branchId);
-    uiStore.showToast('Order parked and held successfully', 'success');
+    uiStore.showToast(wasResumed ? 'Held order updated' : 'Order parked and held successfully', 'success');
   } catch (err: any) {
     uiStore.showToast(err.message || 'Failed to hold order', 'error');
   }
@@ -51,7 +53,10 @@ async function handleHoldCart() {
 
 function handleClearCart() {
   if (cartStore.items.length === 0) return;
-  if (confirm('Clear all items from current cart?')) {
+  const msg = cartStore.resumedOrder
+    ? 'Clear the cart? The held order stays saved in Parked as it was last held.'
+    : 'Clear all items from current cart?';
+  if (confirm(msg)) {
     cartStore.clearCart();
     uiStore.showToast('Cart cleared', 'info');
   }
@@ -78,6 +83,17 @@ function handleClearCart() {
           <FolderOpen class="w-3.5 h-3.5" />
           <span>Parked</span>
         </button>
+      </div>
+
+      <!-- Continuing an existing Pending/Hold order -->
+      <div
+        v-if="cartStore.resumedOrder"
+        class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold"
+      >
+        <RotateCcw class="w-3.5 h-3.5 shrink-0" />
+        <span class="truncate">
+          Continuing held order{{ cartStore.resumedOrder.receipt_no ? ` ${cartStore.resumedOrder.receipt_no}` : '' }}
+        </span>
       </div>
 
       <!-- Order Type Selector -->

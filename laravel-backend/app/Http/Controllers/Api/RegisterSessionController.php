@@ -164,6 +164,14 @@ class RegisterSessionController extends Controller
 
         $session = RegisterSession::with('cashMovements')->findOrFail($validated['session_id']);
 
+        // A closed session keeps the reconciliation it was closed with.
+        if ($session->status !== 'OPEN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This register session is already closed.',
+            ], 422);
+        }
+
         // Expected Cash Formula:
         // Expected Cash = Opening Cash + Cash Sales + Total Cash In - Total Cash Out
         $expectedCash = $session->opening_cash + $session->total_cash_sales + $session->total_cash_in - $session->total_cash_out;
@@ -204,7 +212,10 @@ class RegisterSessionController extends Controller
     {
         $session = RegisterSession::with(['cashMovements.authorizedBy', 'branch', 'cashier'])->findOrFail($id);
 
+        // Only completed (paid) orders are sales. Held/parked and voided orders must not
+        // inflate gross sales, tax, discounts or the transaction count.
         $orders = Order::where('branch_id', $session->branch_id)
+            ->where('status', 'COMPLETED')
             ->whereBetween('created_at', [$session->opened_at, $session->closed_at ?? Carbon::now()])
             ->get();
 

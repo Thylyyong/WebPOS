@@ -99,6 +99,8 @@ export type PaymentMethod = 'CASH' | 'CARD' | 'QR' | 'SPLIT';
 
 export interface CheckoutPayload {
   branch_id: string;
+  /** Set when paying an existing held (PARKED) order so it is completed in place instead of duplicated. */
+  order_id?: string | null;
   cashier_id: number;
   table_id?: string | null;
   table_number?: string | null;
@@ -106,6 +108,7 @@ export interface CheckoutPayload {
   order_type: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
   subtotal: number;
   discount_amount: number;
+  discount_percent?: number;
   tax_amount: number;
   total_amount: number;
   payment_method: PaymentMethod;
@@ -158,7 +161,34 @@ export interface DiningTable {
   customer_name?: string | null;
   order_total?: number;
   current_order_id?: string;
+  /** Order currently linked to the table (a PARKED order while it is on hold). */
+  current_order?: HeldOrder | null;
   opened_at?: string;
+}
+
+// A held / parked (pending) order as returned by GET /orders/parked and GET /orders
+export interface HeldOrderItem {
+  id?: string;
+  product_id?: string | null;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
+
+export interface HeldOrder {
+  id: string;
+  branch_id?: string;
+  receipt_no?: string;
+  status?: string;
+  customer_name?: string | null;
+  table_id?: string | null;
+  table_number?: string | null;
+  order_type?: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY' | string;
+  discount_percent?: number;
+  total_amount?: number;
+  created_at?: string;
+  items?: HeldOrderItem[];
 }
 
 // Shift Register & Cash Drawer

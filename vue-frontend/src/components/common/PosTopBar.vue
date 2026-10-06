@@ -119,16 +119,16 @@ onMounted(() => {
         <FileText class="w-4 h-4" />
       </button>
 
-      <template v-if="authStore.isBoss">
-        <button
-          type="button"
-          @click="go('/menu/products')"
-          class="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700"
-          title="Menu"
-        >
-          <Boxes class="w-4 h-4" />
-        </button>
+      <button
+        type="button"
+        @click="go('/menu/products')"
+        class="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+        title="Menu"
+      >
+        <Boxes class="w-4 h-4" />
+      </button>
 
+      <template v-if="authStore.isBoss">
         <button
           type="button"
           @click="go('/analytics')"

@@ -9,9 +9,16 @@ export interface CheckoutResponse {
 
 export interface HoldOrderPayload {
   branch_id: string;
+  /** Set when re-holding an order that was resumed, so the same held order is updated. */
+  order_id?: string | null;
   customer_name?: string;
-  table_number?: string;
+  table_id?: string | null;
+  table_number?: string | null;
+  order_type?: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
   subtotal: number;
+  discount_amount?: number;
+  discount_percent?: number;
+  tax_amount?: number;
   total_amount: number;
   items: Array<{
     product_id: string;
@@ -35,7 +42,10 @@ export interface OrderListItem {
   receipt_no: string;
   order_number?: string;
   customer_name?: string;
+  table_id?: string | null;
   table_number?: string;
+  order_type?: string;
+  discount_percent?: number;
   status: string;
   payment_method: string;
   subtotal: number;
@@ -75,7 +85,7 @@ export const ordersApi = {
   },
 
   holdOrder(data: HoldOrderPayload) {
-    return apiClient.post<{ success: boolean; message: string; held_order_id?: string }>('/orders/hold', data);
+    return apiClient.post<{ success: boolean; message: string; held_order_id?: string; order?: any }>('/orders/hold', data);
   },
 
   getParkedOrders(branch_id: string) {

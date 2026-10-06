@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { settingsApi } from '../api/settings.api';
 import { useUiStore } from '../stores/ui.store';
 import AppSidebarShell from '../components/common/AppSidebarShell.vue';
+import StaffController from '../components/settings/StaffController.vue';
 import { useAuthStore } from '../stores/auth.store';
 import { useRouter } from 'vue-router';
 import {
@@ -17,6 +18,7 @@ import {
   Upload,
   RefreshCw,
   X,
+  Users,
 } from 'lucide-vue-next';
 import type { StoreSettings } from '../types/pos.types';
 
@@ -133,15 +135,17 @@ async function saveSettings() {
     </template>
 
     <div class="max-w-4xl mx-auto w-full flex flex-col gap-5">
-      <!-- Settings Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <!-- Store Information -->
-        <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
-            <Store class="w-4 h-4 text-teal-600" />
-            <span>Store Profile</span>
+      <!-- One unified settings panel: each section is a row (title on the left, controls on the right) -->
+      <div class="rounded-2xl bg-white border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
+        <section class="p-5 grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
+          <div>
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <Store class="w-4 h-4 text-teal-600" />
+              <span>Store Profile</span>
+            </div>
+            <p class="text-[11.5px] text-slate-400 mt-1">Business name, address and contact details shown on receipts.</p>
           </div>
-
+          <div class="flex flex-col gap-3.5 min-w-0">
           <div class="flex flex-col gap-1">
             <label class="text-xs font-semibold text-slate-600">Store Name</label>
             <input
@@ -177,15 +181,18 @@ async function saveSettings() {
               class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
-        </div>
 
-        <!-- Tax & Currency Configuration -->
-        <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
-            <Sliders class="w-4 h-4 text-teal-600" />
-            <span>Taxes &amp; Currency</span>
           </div>
-
+        </section>
+        <section class="p-5 grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
+          <div>
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <Sliders class="w-4 h-4 text-teal-600" />
+              <span>Taxes &amp; Currency</span>
+            </div>
+            <p class="text-[11.5px] text-slate-400 mt-1">Currency symbol and the default sales tax rate.</p>
+          </div>
+          <div class="flex flex-col gap-3.5 min-w-0">
           <div class="flex flex-col gap-1">
             <label class="text-xs font-semibold text-slate-600">Currency Symbol</label>
             <input
@@ -209,14 +216,18 @@ async function saveSettings() {
             Tax is calculated automatically on order checkout:
             <strong class="font-bold text-teal-900">Subtotal × (Tax Rate / 100)</strong>.
           </div>
-        </div>
 
-        <!-- Payment QR Configuration -->
-        <div class="md:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
-            <QrCode class="w-4 h-4 text-teal-600" />
-            <span>Customer Payment QR Code (ABA KHQR / PromptPay / Mobile Banking)</span>
           </div>
+        </section>
+        <section class="p-5 grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
+          <div>
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <QrCode class="w-4 h-4 text-teal-600" />
+              <span>Customer Payment QR Code (ABA KHQR / PromptPay / Mobile Banking)</span>
+            </div>
+            <p class="text-[11.5px] text-slate-400 mt-1">The QR code customers scan at checkout.</p>
+          </div>
+          <div class="flex flex-col gap-3.5 min-w-0">
           <p class="text-[12px] text-slate-500 -mt-1">
             Upload your merchant payment QR code image. This QR code is displayed to customers directly on the POS screen during QR checkout.
           </p>
@@ -291,15 +302,18 @@ async function saveSettings() {
               class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:border-teal-500 focus:bg-white"
             />
           </div>
-        </div>
 
-        <!-- Receipt Customization (Full width) -->
-        <div class="md:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-800 pb-2 border-b border-slate-100">
-            <Receipt class="w-4 h-4 text-teal-600" />
-            <span>Thermal Receipt Template Format</span>
           </div>
-
+        </section>
+        <section class="p-5 grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
+          <div>
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <Receipt class="w-4 h-4 text-teal-600" />
+              <span>Thermal Receipt Template Format</span>
+            </div>
+            <p class="text-[11.5px] text-slate-400 mt-1">Header and footer printed on every receipt.</p>
+          </div>
+          <div class="flex flex-col gap-3.5 min-w-0">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1">
               <label class="text-xs font-semibold text-slate-600">Receipt Header Banner</label>
@@ -319,15 +333,33 @@ async function saveSettings() {
               />
             </div>
           </div>
-        </div>
 
-        <!-- Account & Session -->
-        <div class="md:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          </div>
+        </section>
+        <section v-if="authStore.isBoss" class="p-5 grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
+          <div>
+            <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <Users class="w-4 h-4 text-teal-600" />
+              <span>Staff Controller</span>
+            </div>
+            <p class="text-[11.5px] text-slate-400 mt-1">Create cashier accounts and change their passwords. Changes here apply immediately.</p>
+          </div>
+          <div class="min-w-0">
+            <StaffController />
+          </div>
+        </section>
+        <section class="p-5 grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
+          <div>
             <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
               <ShieldCheck class="w-4 h-4 text-teal-600" />
               <span>Current Account &amp; Access</span>
             </div>
+            <p class="text-[11.5px] text-slate-400 mt-1">The signed-in account and session control.</p>
+          </div>
+          <div class="flex flex-col items-start gap-3 min-w-0">
+            <p class="text-xs text-slate-500">
+            Logged in as <strong class="font-bold text-slate-800">{{ authStore.user?.name }}</strong> ({{ authStore.user?.role_name || authStore.user?.role }}). Store branch: <strong class="font-bold text-slate-800">{{ authStore.activeBranch?.name }}</strong>.
+          </p>
             <button
               type="button"
               @click="handleLogout"
@@ -337,10 +369,7 @@ async function saveSettings() {
               <span>Switch Role / Logout</span>
             </button>
           </div>
-          <p class="text-xs text-slate-500">
-            Logged in as <strong class="font-bold text-slate-800">{{ authStore.user?.name }}</strong> ({{ authStore.user?.role_name || authStore.user?.role }}). Store branch: <strong class="font-bold text-slate-800">{{ authStore.activeBranch?.name }}</strong>.
-          </p>
-        </div>
+        </section>
       </div>
     </div>
   </AppSidebarShell>

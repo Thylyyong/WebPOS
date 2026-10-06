@@ -49,13 +49,13 @@ const routes = [
     path: '/menu/products',
     name: 'menu-products',
     component: ProductsView,
-    meta: { requiresAuth: true, requiresBoss: true, title: 'Product & SKU Catalog' }
+    meta: { requiresAuth: true, title: 'Product & SKU Catalog' }
   },
   {
     path: '/menu/categories',
     name: 'menu-categories',
     component: MenuCategoriesView,
-    meta: { requiresAuth: true, requiresBoss: true, title: 'Menu & Categories' }
+    meta: { requiresAuth: true, title: 'Menu & Categories' }
   },
   {
     path: '/history',
@@ -98,10 +98,6 @@ router.beforeEach((to, _from, next) => {
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return next({ name: 'login' });
-  }
-
-  if (to.name === 'login' && authStore.isAuthenticated) {
-    return next({ name: 'pos' });
   }
 
   if (to.meta.requiresBoss && !authStore.isBoss) {

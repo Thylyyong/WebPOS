@@ -49,7 +49,13 @@ class AuthController extends Controller
         $query = User::with('branch')->where('is_active', true);
 
         if ($request->filled('username')) {
-            $query->where('username', $request->username);
+            // Staff can type either their username or their name, in any letter case
+            // (usernames are stored lowercase). A username match is preferred over a name match.
+            $login = strtolower(trim($request->username));
+            $query->where(function ($q) use ($login) {
+                $q->whereRaw('LOWER(username) = ?', [$login])
+                  ->orWhereRaw('LOWER(name) = ?', [$login]);
+            })->orderByRaw('CASE WHEN LOWER(username) = ? THEN 0 ELSE 1 END', [$login]);
         }
 
         $user = $query->where('pin_code', $request->pin_code)->first();

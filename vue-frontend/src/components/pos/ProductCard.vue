@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Product } from '../../types/pos.types';
+import { useCatalogStore } from '../../stores/catalog.store';
+import { productTracksStock } from '../../utils/stock';
 import { Plus, ImageIcon } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -10,6 +12,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'add', product: Product): void;
 }>();
+
+const catalogStore = useCatalogStore();
+// Coffee & Drink products have no stock amount, so no low/out-of-stock badge.
+const showStock = computed(() => productTracksStock(props.product, catalogStore.categories));
 
 const imageUrl = computed(() => {
   const p = props.product;
@@ -60,7 +66,7 @@ const imageUrl = computed(() => {
     </div>
 
     <div
-      v-if="product.stock_quantity <= 10"
+      v-if="showStock && product.stock_quantity <= 10"
       class="absolute top-2 right-2 text-[9.5px] font-bold px-1.5 py-0.5 rounded-md"
       :class="product.stock_quantity > 0 ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-rose-50 text-rose-600 border border-rose-200'"
     >
