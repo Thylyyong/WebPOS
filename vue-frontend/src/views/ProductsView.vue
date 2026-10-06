@@ -78,7 +78,9 @@ function getProductImage(p: { image_url?: string | null; image_path?: string | n
   ) {
     return p.image_path;
   }
-  return p.image_path.startsWith('/') ? p.image_path : '/' + p.image_path;
+  const backendBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/api\/?$/, '') || '';
+  const cleanPath = p.image_path.startsWith('/') ? p.image_path : '/' + p.image_path;
+  return backendBase ? `${backendBase}${cleanPath}` : cleanPath;
 }
 
 /* ---------------- Product Modal (Add & Full Edit) ---------------- */

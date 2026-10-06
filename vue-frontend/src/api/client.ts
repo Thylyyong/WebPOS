@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// Support deployed backend URL via environment variable; fallback to '/api' for local dev proxy
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/+$/, '') || '/api';
+
 export const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

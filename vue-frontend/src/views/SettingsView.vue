@@ -52,7 +52,9 @@ function resolveQrImageUrl(pathOrUrl?: string | null): string {
   ) {
     return pathOrUrl;
   }
-  return pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+  const backendBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/api\/?$/, '') || '';
+  const cleanPath = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+  return backendBase ? `${backendBase}${cleanPath}` : cleanPath;
 }
 
 async function onQrFileChange(e: Event) {
