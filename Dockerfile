@@ -47,4 +47,4 @@ ENV PORT=10000
 EXPOSE 10000
 
 # Start script: clear config cache, run migrations, and start server
-CMD php artisan config:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+CMD ["sh", "-c", "php artisan config:clear && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"] 
