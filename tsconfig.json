@@ -4,7 +4,6 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["vue-frontend/src/*"]
     }

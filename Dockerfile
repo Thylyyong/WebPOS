@@ -1,4 +1,4 @@
-FROM php:8.3-cli-alpine
+FROM php:8.4-cli-alpine
 
 # Install system dependencies and PHP extensions
 RUN apk add --no-cache \
@@ -32,8 +32,7 @@ WORKDIR /var/www
 COPY laravel-backend/ .
 
 # Install PHP dependencies without dev packages
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 # Create necessary directories and set permissions
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
@@ -48,4 +47,4 @@ ENV PORT=10000
 EXPOSE 10000
 
 # Start script: clear config cache, run migrations, and start server
-CMD php artisan config:clear && php artisan migrate --force --seed && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+CMD php artisan config:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}

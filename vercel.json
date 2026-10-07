@@ -3,7 +3,7 @@
   "framework": "vite",
   "buildCommand": "npm --prefix vue-frontend run build",
   "outputDirectory": "vue-frontend/dist",
-  "installCommand": "npm --prefix vue-frontend install",
+  "installCommand": "npm --prefix vue-frontend ci",
   "rewrites": [
     {
       "source": "/(.*)",
