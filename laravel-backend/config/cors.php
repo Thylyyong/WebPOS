@@ -1,22 +1,25 @@
-'paths' => ['api/*', 'sanctum/csrf-cookie'],
+<?php
 
-'allowed_methods' => ['*'],
+return [
 
-'allowed_origins' => [
-    'https://webpos.thylyyong91.workers.dev',
-    'http://localhost:5173',
-    'http://localhost:3000',
-],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-'allowed_origins_patterns' => [
-    '#^https://.*\.workers\.dev$#',
-    '#^https://.*\.pages\.dev$#',
-],
+    'allowed_methods' => ['*'],
 
-'allowed_headers' => ['*'],
+    'allowed_origins' => [
+        'https://webpos.thylyyong91.workers.dev',
+        'http://localhost:5173',
+        'http://localhost:3000',
+    ],
 
-'exposed_headers' => [],
+    'allowed_origins_patterns' => [],
 
-'max_age' => 0,
+    'allowed_headers' => ['*'],
 
-'supports_credentials' => true,
+    'exposed_headers' => [],
+
+    'max_age' => 0,
+
+    'supports_credentials' => true,
+
+];
