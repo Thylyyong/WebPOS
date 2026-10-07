@@ -36,12 +36,13 @@ class AccountingController extends Controller
         $branch = Branch::findOrFail($branchId);
 
         // Orders & Revenue
-        $orders = Order::where('branch_id', $branchId)
+        $orderTotals = Order::where('branch_id', $branchId)
             ->where('status', 'COMPLETED')
-            ->get();
+            ->selectRaw('COALESCE(SUM(subtotal), 0) as gross_sales, COALESCE(SUM(discount_amount), 0) as total_discounts')
+            ->first();
 
-        $grossSales = round((float) $orders->sum('subtotal'), 2);
-        $totalDiscounts = round((float) $orders->sum('discount_amount'), 2);
+        $grossSales = round((float) $orderTotals->gross_sales, 2);
+        $totalDiscounts = round((float) $orderTotals->total_discounts, 2);
         $netSales = round($grossSales - $totalDiscounts, 2);
 
         // Cost of Goods Sold (COGS)

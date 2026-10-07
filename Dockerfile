@@ -1,19 +1,7 @@
-FROM php:8.4-cli-alpine
+FROM dunglas/frankenphp:1-php8.4-alpine
 
-# Install system dependencies and PHP extensions
-RUN apk add --no-cache \
-    curl \
-    git \
-    libpng-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    postgresql-dev \
-    sqlite-dev \
-    oniguruma-dev \
-    && docker-php-ext-install \
-    pdo \
+# Install Laravel's database/runtime extensions and OPcache.
+RUN install-php-extensions \
     pdo_mysql \
     pdo_pgsql \
     pdo_sqlite \
@@ -21,7 +9,8 @@ RUN apk add --no-cache \
     xml \
     bcmath \
     zip \
-    pcntl
+    pcntl \
+    opcache
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -32,7 +21,7 @@ WORKDIR /var/www
 COPY laravel-backend/ .
 
 # Install PHP dependencies without dev packages
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Create necessary directories and set permissions
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
@@ -46,5 +35,6 @@ RUN mkdir -p storage/framework/cache/data \
 ENV PORT=10000
 EXPOSE 10000
 
-# Start script: clear config cache, run migrations, and start server
-CMD ["sh", "-c", "php artisan config:clear && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"] 
+# Optimize with runtime environment values, then start FrankenPHP.
+COPY Caddyfile /etc/caddy/Caddyfile
+CMD ["sh", "-c", "php artisan migrate --force && php artisan optimize && exec frankenphp run --config /etc/caddy/Caddyfile"]

@@ -1,0 +1,11 @@
+{
+	frankenphp
+}
+
+:{$PORT:10000} {
+	root * /var/www/public
+	encode zstd gzip
+	php_server {
+		try_files {path} index.php
+	}
+}

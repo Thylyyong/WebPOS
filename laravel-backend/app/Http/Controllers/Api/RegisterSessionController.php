@@ -214,14 +214,15 @@ class RegisterSessionController extends Controller
 
         // Only completed (paid) orders are sales. Held/parked and voided orders must not
         // inflate gross sales, tax, discounts or the transaction count.
-        $orders = Order::where('branch_id', $session->branch_id)
+        $orderTotals = Order::where('branch_id', $session->branch_id)
             ->where('status', 'COMPLETED')
             ->whereBetween('created_at', [$session->opened_at, $session->closed_at ?? Carbon::now()])
-            ->get();
+            ->selectRaw('COALESCE(SUM(total_amount), 0) as gross_sales, COALESCE(SUM(tax_amount), 0) as tax_collected, COALESCE(SUM(discount_amount), 0) as discount_given, COUNT(*) as total_transactions')
+            ->first();
 
-        $grossSales = $orders->sum('total_amount');
-        $taxCollected = $orders->sum('tax_amount');
-        $discountGiven = $orders->sum('discount_amount');
+        $grossSales = (float) $orderTotals->gross_sales;
+        $taxCollected = (float) $orderTotals->tax_collected;
+        $discountGiven = (float) $orderTotals->discount_given;
 
         return response()->json([
             'success' => true,
@@ -245,7 +246,7 @@ class RegisterSessionController extends Controller
                 'expected_cash' => $session->expected_cash,
                 'counted_cash' => $session->closing_cash_counted,
                 'difference' => $session->cash_difference,
-                'total_transactions' => $orders->count(),
+                'total_transactions' => (int) $orderTotals->total_transactions,
                 'closing_notes' => $session->closing_notes,
             ],
         ]);
