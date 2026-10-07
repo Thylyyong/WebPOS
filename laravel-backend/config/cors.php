@@ -2,7 +2,16 @@
 
 'allowed_methods' => ['*'],
 
-'allowed_origins' => ['*'], // Allows requests from your Cloudflare Pages domain
+'allowed_origins' => [
+    'https://webpos.thylyyong91.workers.dev',
+    'http://localhost:5173',
+    'http://localhost:3000',
+],
+
+'allowed_origins_patterns' => [
+    '#^https://.*\.workers\.dev$#',
+    '#^https://.*\.pages\.dev$#',
+],
 
 'allowed_headers' => ['*'],
 
