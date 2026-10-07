@@ -122,3 +122,10 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
 });
+use Illuminate\Support\Facades\Artisan;
+
+Route::get('/run-migrate', function () {
+    Artisan::call('migrate --force');
+    Artisan::call('db:seed --force');
+    return 'Database migrated and seeded successfully!';
+});
