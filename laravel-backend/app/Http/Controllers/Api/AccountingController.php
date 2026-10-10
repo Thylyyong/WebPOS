@@ -18,7 +18,7 @@ class AccountingController extends Controller
      */
     public function profitLoss(Request $request)
     {
-        $branchId = $request->query('branch_id', 'store_a');
+        $branchId = $request->query('branch_id', 'store_main');
         $isConsolidated = ($branchId === 'enterprise' || $branchId === 'all');
 
         if ($isConsolidated) {
@@ -67,9 +67,20 @@ class AccountingController extends Controller
 
         // Simple Net Profit
         $netProfit = round($grossProfit - $totalExpenses - $totalPaidToBoss, 2);
+        $grossMarginPercent = $netSales > 0 ? round(($grossProfit / $netSales) * 100, 1) : 0.0;
+        $netMarginPercent = $netSales > 0 ? round(($netProfit / $netSales) * 100, 1) : 0.0;
 
         return response()->json([
             'success' => true,
+            'profit_loss' => [
+                'gross_sales' => $grossSales,
+                'cogs' => $cogs,
+                'gross_profit' => $grossProfit,
+                'gross_margin_percent' => $grossMarginPercent,
+                'total_expenses' => $totalExpenses,
+                'net_profit' => $netProfit,
+                'net_margin_percent' => $netMarginPercent,
+            ],
             'branch_name' => $branch->branch_name,
             'summary' => [
                 'gross_sales' => $grossSales,
@@ -137,7 +148,7 @@ class AccountingController extends Controller
      */
     public function expenses(Request $request)
     {
-        $branchId = $request->query('branch_id', 'store_a');
+        $branchId = $request->query('branch_id', 'store_main');
 
         $expenses = Expense::where('branch_id', $branchId)
             ->orderBy('created_at', 'desc')

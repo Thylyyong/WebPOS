@@ -409,9 +409,27 @@ Completes an order, calculates tax and change, logs a printable thermal receipt,
     "gross_profit": 56.20,
     "gross_margin_percent": 69.8,
     "total_expenses": 65.00,
-    "net_profit": -8.80,
-    "net_margin_percent": -10.9
-  }
+    "net_profit": -511.22,
+    "net_margin_percent": -635.1
+  },
+  "branch_name": "OmniPOS Main Store",
+  "summary": {
+    "gross_sales": 80.50,
+    "discounts": 0.00,
+    "net_sales": 80.50,
+    "cogs": 24.30,
+    "gross_profit": 56.20,
+    "total_expenses": 65.00,
+    "hybrid_paid_to_boss": 502.42,
+    "net_profit": -511.22
+  },
+  "settlement": {
+    "base_rent": 500.00,
+    "royalty_percent": 3.00,
+    "royalty_amount": 2.42,
+    "total_settlement": 502.42
+  },
+  "expenses_breakdown": []
 }
 ```
 
